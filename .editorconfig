@@ -1,0 +1,16 @@
+root = true
+
+# Universal defaults
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+# Go formatting hints for JetBrains IDEs (ij_*)
+[*.go]
+ij_go_local_package_prefixes = salary_calculator
+ij_go_group_stdlib_imports = true

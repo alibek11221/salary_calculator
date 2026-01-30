@@ -1,0 +1,539 @@
+basePath: /api/v1
+definitions:
+  add_bonus.In:
+    properties:
+      coefficient:
+        type: number
+      date:
+        $ref: '#/definitions/value_objects.SalaryDate'
+      value:
+        type: number
+    type: object
+  add_bonus.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  add_salay_change.In:
+    properties:
+      date:
+        $ref: '#/definitions/value_objects.SalaryDate'
+      value:
+        type: number
+    type: object
+  add_salay_change.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  calculator.SalaryCalculationResult:
+    properties:
+      advance:
+        type: number
+      extra_payments:
+        $ref: '#/definitions/value_objects.ExtraPaymentsCollectionDto'
+      grossAdvance:
+        type: number
+      grossSalary:
+        type: number
+      grossTotal:
+        type: number
+      salary:
+        type: number
+      total:
+        type: number
+    type: object
+  delete_bonus.In:
+    properties:
+      id:
+        type: string
+    type: object
+  delete_bonus.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  delete_salary_change.In:
+    properties:
+      id:
+        type: string
+    type: object
+  delete_salary_change.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  edit_bonus.In:
+    properties:
+      coefficient:
+        type: number
+      date:
+        $ref: '#/definitions/value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  edit_bonus.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  edit_salary_change.In:
+    properties:
+      date:
+        $ref: '#/definitions/value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  edit_salary_change.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  get_bonuses.Bonus:
+    properties:
+      coefficient:
+        type: number
+      date:
+        $ref: '#/definitions/value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  get_bonuses.Out:
+    properties:
+      bonuses:
+        items:
+          $ref: '#/definitions/get_bonuses.Bonus'
+        type: array
+    type: object
+  get_salary_changes.Change:
+    properties:
+      date:
+        $ref: '#/definitions/value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  get_salary_changes.Out:
+    properties:
+      changes:
+        items:
+          $ref: '#/definitions/get_salary_changes.Change'
+        type: array
+    type: object
+  get_salary_report.Out:
+    properties:
+      base_salary:
+        type: number
+      result:
+        $ref: '#/definitions/calculator.SalaryCalculationResult'
+    type: object
+  health.MemoryInfo:
+    properties:
+      alloc:
+        type: string
+      frees:
+        type: integer
+      gc_cycles:
+        type: integer
+      gc_sys:
+        type: string
+      heap_alloc:
+        type: string
+      heap_idle:
+        type: string
+      heap_inuse:
+        type: string
+      heap_objects:
+        type: integer
+      heap_released:
+        type: string
+      heap_sys:
+        type: string
+      last_gc_timestamp:
+        type: integer
+      lookups:
+        type: integer
+      mallocs:
+        type: integer
+      next_gc:
+        type: string
+      stack_inuse:
+        type: string
+      stack_sys:
+        type: string
+      sys:
+        type: string
+      total_alloc:
+        type: string
+    type: object
+  health.Response:
+    properties:
+      memory:
+        $ref: '#/definitions/health.MemoryInfo'
+      services:
+        items:
+          $ref: '#/definitions/health.Status'
+        type: array
+      status:
+        description: '"healthy", "unhealthy"'
+        type: string
+      system:
+        $ref: '#/definitions/health.SystemInfo'
+      timestamp:
+        type: string
+    type: object
+  health.Status:
+    properties:
+      message:
+        type: string
+      name:
+        type: string
+      status:
+        description: '"healthy", "unhealthy"'
+        type: string
+      timestamp:
+        type: string
+    type: object
+  health.SystemInfo:
+    properties:
+      cpu_cores:
+        type: integer
+      go_version:
+        type: string
+      goroutines:
+        type: integer
+      uptime:
+        type: string
+    type: object
+  value_objects.ExtraPayment:
+    properties:
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/value_objects.ExtraPaymentType'
+      value:
+        type: number
+    type: object
+  value_objects.ExtraPaymentType:
+    enum:
+    - advance
+    - salary
+    type: string
+    x-enum-varnames:
+    - Advance
+    - Salary
+  value_objects.ExtraPaymentsCollectionDto:
+    properties:
+      payments:
+        items:
+          $ref: '#/definitions/value_objects.ExtraPayment'
+        type: array
+      total:
+        type: number
+    type: object
+  value_objects.SalaryDate:
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для расчета зарплаты, управления бонусами и изменениями оклада.
+  title: Salary Calculator API
+  version: "1.0"
+paths:
+  /bonuses/:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет запись о бонусе
+      parameters:
+      - description: ID бонуса
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/delete_bonus.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delete_bonus.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить бонус
+      tags:
+      - bonuses
+    get:
+      description: Возвращает список всех зарегистрированных бонусов
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/get_bonuses.Out'
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Список бонусов
+      tags:
+      - bonuses
+    post:
+      consumes:
+      - application/json
+      description: Создает новую запись о бонусе
+      parameters:
+      - description: Данные бонуса
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/add_bonus.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/add_bonus.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить бонус
+      tags:
+      - bonuses
+    put:
+      consumes:
+      - application/json
+      description: Обновляет данные существующего бонуса
+      parameters:
+      - description: Данные бонуса
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/edit_bonus.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/edit_bonus.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Редактировать бонус
+      tags:
+      - bonuses
+  /health/health:
+    get:
+      description: Возвращает текущее состояние сервиса и системные метрики
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.Response'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/health.Response'
+      summary: Проверка здоровья
+      tags:
+      - health
+  /salary/changes/:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет запись об изменении оклада
+      parameters:
+      - description: ID записи
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/delete_salary_change.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delete_salary_change.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить изменение зарплаты
+      tags:
+      - salary
+    get:
+      description: Возвращает историю изменений базовой зарплаты
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/get_salary_changes.Out'
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Список изменений зарплаты
+      tags:
+      - salary
+    post:
+      consumes:
+      - application/json
+      description: Создает новую запись об изменении оклада
+      parameters:
+      - description: Данные изменения
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/add_salay_change.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/add_salay_change.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить изменение зарплаты
+      tags:
+      - salary
+    put:
+      consumes:
+      - application/json
+      description: Обновляет данные существующей записи об изменении оклада
+      parameters:
+      - description: Данные изменения
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/edit_salary_change.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/edit_salary_change.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Редактировать изменение зарплаты
+      tags:
+      - salary
+  /salary/report:
+    get:
+      description: Рассчитывает зарплату за указанный месяц и год
+      parameters:
+      - description: Год (напр. 2024)
+        in: query
+        name: year
+        required: true
+        type: integer
+      - description: Месяц (1-12)
+        in: query
+        name: month
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/get_salary_report.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Отчет по зарплате
+      tags:
+      - salary
+swagger: "2.0"
