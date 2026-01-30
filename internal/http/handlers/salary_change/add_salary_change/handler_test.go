@@ -6,12 +6,11 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"testing"
-
-	"salary_calculator/internal/dto/add_salay_change"
+	dto "salary_calculator/internal/dto/add_salary_change"
 	"salary_calculator/internal/dto/value_objects"
-	"salary_calculator/internal/http/handlers/salary_change/add_salary_change"
+	handler "salary_calculator/internal/http/handlers/salary_change/add_salary_change"
 	uc "salary_calculator/internal/usecase/add_salary_change"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -22,26 +21,26 @@ func TestHandler_ServeHTTP(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUC := NewMockusecase(ctrl)
-	handler := add_salary_change.NewHandler(mockUC)
+	h := handler.NewHandler(mockUC)
 
 	date, _ := value_objects.NewSalaryDate("2024_01")
-	validIn := add_salay_change.In{
+	validIn := dto.In{
 		Value: 1000,
 		Date:  date,
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		mockUC.EXPECT().Do(gomock.Any(), validIn).Return(&add_salay_change.Out{Ok: true}, nil)
+		mockUC.EXPECT().Do(gomock.Any(), validIn).Return(&dto.Out{Ok: true}, nil)
 
 		body, _ := json.Marshal(validIn)
 		req := httptest.NewRequest(http.MethodPost, "/add", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
-		handler.ServeHTTP(w, req)
+		h.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var resp add_salay_change.Out
+		var resp dto.Out
 		json.Unmarshal(w.Body.Bytes(), &resp)
 		assert.True(t, resp.Ok)
 	})
@@ -53,7 +52,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/add", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
-		handler.ServeHTTP(w, req)
+		h.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Contains(t, w.Body.String(), "already exists")
@@ -63,7 +62,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/add", bytes.NewReader([]byte("{invalid")))
 		w := httptest.NewRecorder()
 
-		handler.ServeHTTP(w, req)
+		h.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
@@ -75,7 +74,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/add", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
-		handler.ServeHTTP(w, req)
+		h.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})

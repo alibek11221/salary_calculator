@@ -7,7 +7,6 @@ package get_bonuses_test
 import (
 	context "context"
 	reflect "reflect"
-
 	get_bonuses "salary_calculator/internal/dto/get_bonuses"
 
 	gomock "github.com/golang/mock/gomock"

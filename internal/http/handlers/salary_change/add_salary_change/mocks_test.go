@@ -7,8 +7,7 @@ package add_salary_change_test
 import (
 	context "context"
 	reflect "reflect"
-
-	add_salay_change "salary_calculator/internal/dto/add_salay_change"
+	add_salary_change "salary_calculator/internal/dto/add_salary_change"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -37,10 +36,10 @@ func (m *Mockusecase) EXPECT() *MockusecaseMockRecorder {
 }
 
 // Do mocks base method.
-func (m *Mockusecase) Do(ctx context.Context, in add_salay_change.In) (*add_salay_change.Out, error) {
+func (m *Mockusecase) Do(ctx context.Context, in add_salary_change.In) (*add_salary_change.Out, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Do", ctx, in)
-	ret0, _ := ret[0].(*add_salay_change.Out)
+	ret0, _ := ret[0].(*add_salary_change.Out)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

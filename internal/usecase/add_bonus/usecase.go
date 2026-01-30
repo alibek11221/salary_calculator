@@ -5,6 +5,7 @@ import (
 	"errors"
 	"salary_calculator/internal/dto/add_bonus"
 	"salary_calculator/internal/generated/dbstore"
+	"salary_calculator/internal/pkg/database"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -32,7 +33,7 @@ func (u *usecase) Do(ctx context.Context, in add_bonus.In) (*add_bonus.Out, erro
 	err := u.r.InsertBonus(ctx, model)
 	if err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == DuplicateEntryCode {
+		if errors.As(err, &pgErr) && pgErr.Code == database.DuplicateEntryCode {
 			return nil, ErrDuplicateBonus
 		}
 

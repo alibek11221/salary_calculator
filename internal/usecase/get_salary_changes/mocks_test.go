@@ -7,7 +7,6 @@ package get_salary_changes_test
 import (
 	context "context"
 	reflect "reflect"
-
 	dbstore "salary_calculator/internal/generated/dbstore"
 
 	gomock "github.com/golang/mock/gomock"

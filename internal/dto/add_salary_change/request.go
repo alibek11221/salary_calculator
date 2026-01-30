@@ -1,4 +1,4 @@
-package add_salay_change
+package add_salary_change
 
 import (
 	"salary_calculator/internal/dto/value_objects"

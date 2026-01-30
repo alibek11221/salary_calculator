@@ -18,6 +18,7 @@ import (
 	editSalaryChangeUC "salary_calculator/internal/usecase/edit_salary_change"
 	getSalaryChangesUC "salary_calculator/internal/usecase/get_salary_changes"
 	getSalaryReportUC "salary_calculator/internal/usecase/get_salary_report"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -32,7 +33,7 @@ func NewSalaryRoutesRegistrar(a *app.App) *SalaryRoutesRegistrar {
 
 func (s *SalaryRoutesRegistrar) Register(router chi.Router) {
 	repo := dbstore.New(s.app.DB)
-	httpClient := &http.Client{}
+	httpClient := &http.Client{Timeout: 10 * time.Second}
 	cache := file.New[string, work_calendar.WorkdayResponse](s.app.Config.Cache.Dir, s.app.Config.Cache.TTL, s.app.Logger)
 
 	workDaysClient := work_calendar.New(httpClient, cache, s.app.Config.WorkCalendarApiToken, s.app.Logger)

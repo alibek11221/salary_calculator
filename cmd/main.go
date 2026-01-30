@@ -27,6 +27,7 @@ func init() {
 // @BasePath /api/v1
 func main() {
 	cfg := config.GetConfig()
+
 	a, err := app.New(cfg)
 	if err != nil {
 		panic("cannot initialize app: " + err.Error())

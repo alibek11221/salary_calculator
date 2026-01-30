@@ -7,7 +7,6 @@ package edit_salary_change_test
 import (
 	context "context"
 	reflect "reflect"
-
 	dbstore "salary_calculator/internal/generated/dbstore"
 
 	gomock "github.com/golang/mock/gomock"

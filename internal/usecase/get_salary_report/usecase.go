@@ -48,9 +48,16 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 
 	g.Go(func() error {
 		var err error
-		latestSalary, err = u.getLatestChange(gCtx, targetDate)
+		latestSalaryRow, err := u.r.GetLatestChangeBeforeDate(gCtx, targetDate.String())
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("latest salary not found for date %s", targetDate.String())
+			}
+			return err
+		}
+		latestSalary = &latestSalaryRow
 
-		return err
+		return nil
 	})
 
 	g.Go(func() error {
@@ -79,8 +86,12 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 	}
 
 	wDays := u.workdaysCalculator.CalculateWorkDaysForMonth(wdr)
+	if wDays == nil {
+		return nil, fmt.Errorf("could not calculate workdays")
+	}
+
 	ndfl := utils.CalculateNDFL(latestSalary.Salary)
-	sCtx := value_objects.NewSalaryContext(latestSalary.Salary, ndfl, wDays)
+	sCtx := value_objects.NewSalaryContext(latestSalary.Salary, ndfl, *wDays)
 
 	foodPay := 529 * wDays.TotalWorkdays
 	extraCollection := *value_objects.NewExtraPaymentsCollection(value_objects.ExtraPayment{
@@ -103,40 +114,4 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 		BaseSalary: latestSalary.Salary,
 		Result:     calc,
 	}, nil
-}
-
-func (u *usecase) getLatestChange(
-	ctx context.Context,
-	targetDate *value_objects.SalaryDate,
-) (
-	*dbstore.SalaryChange,
-	error,
-) {
-	changes, err := u.r.ListChanges(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list salary changes: %w", err)
-	}
-
-	var latestChangeBeforeTarget *dbstore.SalaryChange
-	var latestDateBeforeTarget *value_objects.SalaryDate
-
-	for _, change := range changes {
-		changeDate, err := value_objects.NewSalaryDate(change.ChangeFrom)
-		if err != nil {
-			continue
-		}
-
-		if changeDate.Compare(targetDate) <= 0 {
-			if latestDateBeforeTarget == nil || changeDate.Compare(latestDateBeforeTarget) > 0 {
-				latestChangeBeforeTarget = &change
-				latestDateBeforeTarget = changeDate
-			}
-		}
-	}
-
-	if latestChangeBeforeTarget == nil {
-		return nil, errors.New("failed to find any salary change before target date")
-	}
-
-	return latestChangeBeforeTarget, nil
 }

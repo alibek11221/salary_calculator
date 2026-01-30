@@ -7,7 +7,6 @@ package delete_bonus_test
 import (
 	context "context"
 	reflect "reflect"
-
 	delete_bonus "salary_calculator/internal/dto/delete_bonus"
 
 	gomock "github.com/golang/mock/gomock"
