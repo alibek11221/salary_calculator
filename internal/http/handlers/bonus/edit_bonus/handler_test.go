@@ -35,7 +35,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			reqBody: edit_bonus_dto.In{
 				ID:          "550e8400-e29b-41d4-a716-446655440000",
 				Value:       6000,
-				Date:        *sd,
+				Date:        sd,
 				Coefficient: 1.2,
 			},
 			setup: func(f fields) {
@@ -55,7 +55,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			reqBody: edit_bonus_dto.In{
 				ID:          "550e8400-e29b-41d4-a716-446655440000",
 				Value:       6000,
-				Date:        *sd,
+				Date:        sd,
 				Coefficient: 1.2,
 			},
 			setup: func(f fields) {

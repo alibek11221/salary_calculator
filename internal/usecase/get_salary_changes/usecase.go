@@ -2,10 +2,9 @@ package get_salary_changes
 
 import (
 	"context"
-	"slices"
-
 	"salary_calculator/internal/dto/get_salary_changes"
 	"salary_calculator/internal/dto/value_objects"
+	"slices"
 )
 
 type usecase struct {
@@ -33,12 +32,12 @@ func (u *usecase) Do(ctx context.Context) (*get_salary_changes.Out, error) {
 		outChanges[i] = get_salary_changes.Change{
 			ID:    change.ID.String(),
 			Value: change.Salary,
-			Date:  *parsedDate,
+			Date:  parsedDate,
 		}
 	}
 
 	slices.SortFunc(outChanges, func(a, b get_salary_changes.Change) int {
-		return a.Date.Compare(&b.Date)
+		return a.Date.Compare(b.Date)
 	})
 
 	return &get_salary_changes.Out{Changes: outChanges}, nil

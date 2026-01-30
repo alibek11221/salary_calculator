@@ -27,7 +27,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 	date, _ := value_objects.NewSalaryDate("2024_01")
 	validIn := add_salay_change.In{
 		Value: 1000,
-		Date:  *date,
+		Date:  date,
 	}
 
 	t.Run("Success", func(t *testing.T) {

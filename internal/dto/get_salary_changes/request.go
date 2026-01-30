@@ -11,7 +11,7 @@ type Out struct {
 }
 
 type Change struct {
-	ID    string                   `json:"id"`
-	Value float64                  `json:"value"`
-	Date  value_objects.SalaryDate `json:"date"`
+	ID    string                    `json:"id"`
+	Value float64                   `json:"value"`
+	Date  *value_objects.SalaryDate `json:"date"`
 }

@@ -35,7 +35,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			reqBody: edit_salary_change_dto.In{
 				ID:    "550e8400-e29b-41d4-a716-446655440000",
 				Value: 120000,
-				Date:  *sd,
+				Date:  sd,
 			},
 			setup: func(f fields) {
 				f.u.EXPECT().Do(gomock.Any(), gomock.Any()).Return(&edit_salary_change_dto.Out{Ok: true}, nil)
@@ -54,7 +54,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			reqBody: edit_salary_change_dto.In{
 				ID:    "550e8400-e29b-41d4-a716-446655440000",
 				Value: 120000,
-				Date:  *sd,
+				Date:  sd,
 			},
 			setup: func(f fields) {
 				f.u.EXPECT().Do(gomock.Any(), gomock.Any()).Return(nil, errors.New("uc error"))

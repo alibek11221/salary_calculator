@@ -9,8 +9,8 @@ type Out struct {
 }
 
 type Bonus struct {
-	ID          string                   `json:"id"`
-	Value       float64                  `json:"value"`
-	Date        value_objects.SalaryDate `json:"date"`
-	Coefficient float64                  `json:"coefficient"`
+	ID          string                    `json:"id"`
+	Value       float64                   `json:"value"`
+	Date        *value_objects.SalaryDate `json:"date"`
+	Coefficient float64                   `json:"coefficient"`
 }

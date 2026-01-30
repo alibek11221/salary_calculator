@@ -8,7 +8,10 @@ import (
 	"salary_calculator/internal/dto/get_salary_report"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
+	wc "salary_calculator/internal/pkg/http/work_calendar"
 	"salary_calculator/internal/pkg/utils"
+
+	eg "golang.org/x/sync/errgroup"
 )
 
 type usecase struct {
@@ -35,18 +38,39 @@ func New(
 func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_report.Out, error) {
 	targetDate := value_objects.From(in.Year, in.Month)
 
-	latestSalary, err := u.getLatestChange(ctx, &targetDate)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		latestSalary *dbstore.SalaryChange
+		b            dbstore.Bonuse
+		wdr          *wc.WorkdayResponse
+	)
 
-	b, err := u.r.GetBonusByDate(ctx, targetDate.String())
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, err
-	}
+	g, gCtx := eg.WithContext(ctx)
 
-	wdr, err := u.workdaysClient.GetWorkdaysForMonth(ctx, in.Month, in.Year)
-	if err != nil {
+	g.Go(func() error {
+		var err error
+		latestSalary, err = u.getLatestChange(gCtx, targetDate)
+
+		return err
+	})
+
+	g.Go(func() error {
+		var err error
+		b, err = u.r.GetBonusByDate(gCtx, targetDate.String())
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+
+		return nil
+	})
+
+	g.Go(func() error {
+		var err error
+		wdr, err = u.workdaysClient.GetWorkdaysForMonth(gCtx, in.Month, in.Year)
+
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 

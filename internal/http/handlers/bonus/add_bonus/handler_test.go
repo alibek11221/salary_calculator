@@ -35,7 +35,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			name: "success",
 			reqBody: add_bonus_dto.In{
 				Value:       5000,
-				Date:        *sd,
+				Date:        sd,
 				Coefficient: 1.0,
 			},
 			setup: func(f fields) {
@@ -48,7 +48,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			name: "duplicate error",
 			reqBody: add_bonus_dto.In{
 				Value:       5000,
-				Date:        *sd,
+				Date:        sd,
 				Coefficient: 1.0,
 			},
 			setup: func(f fields) {
@@ -67,7 +67,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			name: "internal error",
 			reqBody: add_bonus_dto.In{
 				Value:       5000,
-				Date:        *sd,
+				Date:        sd,
 				Coefficient: 1.0,
 			},
 			setup: func(f fields) {
