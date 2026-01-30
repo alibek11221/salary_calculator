@@ -1,0 +1,115 @@
+package file
+
+import (
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
+	"time"
+
+	"github.com/rs/zerolog/log"
+)
+
+type Cache[K comparable, V any] struct {
+	dir string
+	ttl time.Duration
+	buf sync.Pool
+}
+
+func New[K comparable, V any](dir string, ttl time.Duration) *Cache[K, V] {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		log.Error().Err(err).Str("dir", dir).Msg("failed to create cache directory")
+	}
+
+	return &Cache[K, V]{
+		dir: dir,
+		ttl: ttl,
+		buf: sync.Pool{
+			New: func() any {
+				return new(bytes.Buffer)
+			},
+		},
+	}
+}
+
+type cacheEntry[V any] struct {
+	Value     V         `json:"value"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
+	var zero V
+	k := fmt.Sprintf("%v", key)
+	filename := filepath.Join(c.dir, k+".json.gz")
+
+	file, err := os.Open(filename)
+	if os.IsNotExist(err) {
+		return zero, false
+	}
+	if err != nil {
+		return zero, false
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+
+	gzReader, err := gzip.NewReader(file)
+	if err != nil {
+		return zero, false
+	}
+	defer func(gzReader *gzip.Reader) {
+		_ = gzReader.Close()
+	}(gzReader)
+
+	var entry cacheEntry[V]
+	if err := json.NewDecoder(gzReader).Decode(&entry); err != nil {
+		return zero, false
+	}
+
+	if time.Now().After(entry.ExpiresAt) {
+		_ = os.Remove(filename)
+		return zero, false
+	}
+
+	return entry.Value, true
+}
+
+func (c *Cache[K, V]) Put(key K, value V) error {
+	k := fmt.Sprintf("%v", key)
+	filename := filepath.Join(c.dir, k+".json.gz")
+
+	buf := c.buf.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		c.buf.Put(buf)
+	}()
+
+	entry := cacheEntry[V]{
+		Value:     value,
+		ExpiresAt: time.Now().Add(c.ttl),
+	}
+
+	if err := json.NewEncoder(buf).Encode(entry); err != nil {
+		return fmt.Errorf("failed to marshal cache entry: %w", err)
+	}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create cache file: %w", err)
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+
+	gzWriter := gzip.NewWriter(file)
+	defer gzWriter.Close()
+
+	if _, err := buf.WriteTo(gzWriter); err != nil {
+		return fmt.Errorf("failed to write compressed data: %w", err)
+	}
+
+	return nil
+}
