@@ -58,6 +58,9 @@ func TestSalaryDate_Compare(t *testing.T) {
 		{"Later month", d202402, d202401, 1},
 		{"Earlier year", d202401, d202501, -1},
 		{"Later year", d202501, d202401, 1},
+		{"Nil s", nil, d202401, -1},
+		{"Nil other", d202401, nil, 1},
+		{"Both nil", nil, nil, 0},
 	}
 
 	for _, tt := range tests {

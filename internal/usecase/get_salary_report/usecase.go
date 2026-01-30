@@ -74,7 +74,11 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 		return nil, err
 	}
 
-	wDays := u.workdaysCalculator.CalculateWorkDaysForMonth(*wdr)
+	if latestSalary == nil {
+		return nil, fmt.Errorf("latest salary not found for date %s", targetDate.String())
+	}
+
+	wDays := u.workdaysCalculator.CalculateWorkDaysForMonth(wdr)
 	ndfl := utils.CalculateNDFL(latestSalary.Salary)
 	sCtx := value_objects.NewSalaryContext(latestSalary.Salary, ndfl, wDays)
 
@@ -101,7 +105,10 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 	}, nil
 }
 
-func (u *usecase) getLatestChange(ctx context.Context, targetDate *value_objects.SalaryDate) (
+func (u *usecase) getLatestChange(
+	ctx context.Context,
+	targetDate *value_objects.SalaryDate,
+) (
 	*dbstore.SalaryChange,
 	error,
 ) {

@@ -19,5 +19,6 @@ func CalculateNDFL(salary float64) float64 {
 	if annualSalary <= 50000000 {
 		return 20.0
 	}
+
 	return 22.0
 }

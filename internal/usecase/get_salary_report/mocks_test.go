@@ -168,7 +168,7 @@ func (m *MockworkdaysCalculator) EXPECT() *MockworkdaysCalculatorMockRecorder {
 }
 
 // CalculateWorkDaysForMonth mocks base method.
-func (m *MockworkdaysCalculator) CalculateWorkDaysForMonth(month work_calendar.WorkdayResponse) work_days.WorkdaysForMonth {
+func (m *MockworkdaysCalculator) CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) work_days.WorkdaysForMonth {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CalculateWorkDaysForMonth", month)
 	ret0, _ := ret[0].(work_days.WorkdaysForMonth)

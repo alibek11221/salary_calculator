@@ -37,6 +37,12 @@ func (u *usecase) Do(ctx context.Context) (*get_salary_changes.Out, error) {
 	}
 
 	slices.SortFunc(outChanges, func(a, b get_salary_changes.Change) int {
+		if a.Date == nil && b.Date == nil {
+			return 0
+		}
+		if a.Date == nil {
+			return -1
+		}
 		return a.Date.Compare(b.Date)
 	})
 

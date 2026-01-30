@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"salary_calculator/internal/pkg/logging"
 	"sync"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,13 +22,15 @@ type Service struct {
 	client httpClient
 	cache  cache
 	token  string
+	logger logging.Logger
 }
 
-func New(client httpClient, cache cache, token string) *Service {
+func New(client httpClient, cache cache, token string, logger logging.Logger) *Service {
 	return &Service{
 		cache:  cache,
 		token:  token,
 		client: client,
+		logger: logger,
 	}
 }
 
@@ -52,7 +54,7 @@ func (s *Service) GetWorkdaysForYear(ctx context.Context) (map[int]WorkdayRespon
 	}
 
 	if len(monthsToFetch) == 0 {
-		log.Info().Str("duration", time.Since(start).String()).Msg("all data from cache")
+		s.logger.Info().Str("duration", time.Since(start).String()).Msg("all data from cache")
 		return results, nil
 	}
 
@@ -69,9 +71,13 @@ func (s *Service) GetWorkdaysForYear(ctx context.Context) (map[int]WorkdayRespon
 					return err
 				}
 
+				if response == nil {
+					return fmt.Errorf("nil response for month %d", month)
+				}
+
 				cacheKey := fmt.Sprintf(cacheKeyTemplate, year, month)
 				if cacheErr := s.cache.Put(cacheKey, *response); cacheErr != nil {
-					log.Warn().Err(cacheErr).Int("month", month).Msg("failed to cache month workdays")
+					s.logger.Warn().Err(cacheErr).Int("month", month).Msg("failed to cache month workdays")
 				}
 
 				mu.Lock()
@@ -87,7 +93,7 @@ func (s *Service) GetWorkdaysForYear(ctx context.Context) (map[int]WorkdayRespon
 		return nil, err
 	}
 
-	log.Info().Str("duration", time.Since(start).String()).Int("fetched_months", len(monthsToFetch)).Msg("fetch completed")
+	s.logger.Info().Str("duration", time.Since(start).String()).Int("fetched_months", len(monthsToFetch)).Msg("fetch completed")
 	return results, nil
 }
 
@@ -108,9 +114,13 @@ func (s *Service) GetWorkdaysForMonth(ctx context.Context, month int, year int) 
 		return nil, err
 	}
 
+	if response == nil {
+		return nil, fmt.Errorf("nil response from Request")
+	}
+
 	err = s.cache.Put(cacheKey, *response)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to cache month workdays")
+		s.logger.Warn().Err(err).Msg("failed to cache month workdays")
 	}
 
 	return response, nil
@@ -119,7 +129,7 @@ func (s *Service) GetWorkdaysForMonth(ctx context.Context, month int, year int) 
 func (s *Service) Request(ctx context.Context, url string) (*WorkdayResponse, error) {
 	start := time.Now()
 	defer func() {
-		log.Debug().Str("url", url).Dur("duration", time.Since(start)).Msg("request completed")
+		s.logger.Debug().Str("url", url).Dur("duration", time.Since(start)).Msg("request completed")
 	}()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -141,6 +151,9 @@ func (s *Service) Request(ctx context.Context, url string) (*WorkdayResponse, er
 }
 
 func parseResponse(resp *http.Response) (*WorkdayResponse, error) {
+	if resp == nil {
+		return nil, fmt.Errorf("nil response")
+	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)

@@ -2,20 +2,22 @@ package logging
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/zerolog/log"
 )
 
-type ZerologAdapter struct{}
-
-func (z *ZerologAdapter) Print(v ...interface{}) {
-	log.Info().Msg(fmt.Sprint(v...))
+type ZerologAdapter struct {
+	logger Logger
 }
 
-func init() {
-	middleware.DefaultLogger = middleware.RequestLogger(&middleware.DefaultLogFormatter{
-		Logger:  &ZerologAdapter{},
+func (z *ZerologAdapter) Print(v ...interface{}) {
+	z.logger.Info().Msg(fmt.Sprint(v...))
+}
+
+func GetChiMiddleware(logger Logger) func(http.Handler) http.Handler {
+	return middleware.RequestLogger(&middleware.DefaultLogFormatter{
+		Logger:  &ZerologAdapter{logger: logger},
 		NoColor: true,
 	})
 }

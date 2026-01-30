@@ -7,21 +7,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"salary_calculator/internal/pkg/logging"
 	"sync"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 type Cache[K comparable, V any] struct {
-	dir string
-	ttl time.Duration
-	buf sync.Pool
+	dir    string
+	ttl    time.Duration
+	buf    sync.Pool
+	logger logging.Logger
 }
 
-func New[K comparable, V any](dir string, ttl time.Duration) *Cache[K, V] {
+func New[K comparable, V any](dir string, ttl time.Duration, logger logging.Logger) *Cache[K, V] {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		log.Error().Err(err).Str("dir", dir).Msg("failed to create cache directory")
+		logger.Error().Err(err).Str("dir", dir).Msg("failed to create cache directory")
 	}
 
 	return &Cache[K, V]{
@@ -32,6 +32,7 @@ func New[K comparable, V any](dir string, ttl time.Duration) *Cache[K, V] {
 				return new(bytes.Buffer)
 			},
 		},
+		logger: logger,
 	}
 }
 
@@ -42,6 +43,9 @@ type cacheEntry[V any] struct {
 
 func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 	var zero V
+	if c == nil {
+		return zero, false
+	}
 	k := fmt.Sprintf("%v", key)
 	filename := filepath.Join(c.dir, k+".json.gz")
 
@@ -78,6 +82,9 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 }
 
 func (c *Cache[K, V]) Put(key K, value V) error {
+	if c == nil {
+		return fmt.Errorf("cache is nil")
+	}
 	k := fmt.Sprintf("%v", key)
 	filename := filepath.Join(c.dir, k+".json.gz")
 

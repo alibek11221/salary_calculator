@@ -3,18 +3,21 @@ package database
 import (
 	"context"
 	"fmt"
-
 	"salary_calculator/internal/config"
+	"salary_calculator/internal/pkg/logging"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/rs/zerolog/log"
 )
 
 type DB struct {
 	*pgxpool.Pool
+	logger logging.Logger
 }
 
-func NewPostgresConnection(cfg *config.Config) (*DB, error) {
+func NewPostgresConnection(cfg *config.Config, logger logging.Logger) (*DB, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config is nil")
+	}
 	ctx := context.Background()
 	connString := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
@@ -45,7 +48,7 @@ func NewPostgresConnection(cfg *config.Config) (*DB, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	log.Info().
+	logger.Info().
 		Str("host", cfg.Database.Host).
 		Str("port", cfg.Database.Port).
 		Str("database", cfg.Database.Name).
@@ -54,18 +57,27 @@ func NewPostgresConnection(cfg *config.Config) (*DB, error) {
 		Dur("conn_max_lifetime", cfg.Database.ConnMaxLifetime).
 		Msg("database connection established")
 
-	return &DB{Pool: pool}, nil
+	return &DB{Pool: pool, logger: logger}, nil
 }
 
 func (db *DB) Close() {
-	log.Info().Msg("closing database connection")
+	if db == nil || db.Pool == nil {
+		return
+	}
+	db.logger.Info().Msg("closing database connection")
 	db.Pool.Close()
 }
 
 func (db *DB) HealthCheck(ctx context.Context) error {
+	if db == nil || db.Pool == nil {
+		return fmt.Errorf("database connection is not initialized")
+	}
 	return db.Ping(ctx)
 }
 
 func (db *DB) GetPool() *pgxpool.Pool {
+	if db == nil {
+		return nil
+	}
 	return db.Pool
 }

@@ -36,11 +36,20 @@ func NewExtraPaymentsCollection(payments ...ExtraPayment) *ExtraPaymentsCollecti
 }
 
 func (e *ExtraPaymentsCollection) Push(payment ExtraPayment) {
+	if e == nil {
+		return
+	}
 	e.payments = append(e.payments, payment)
+	if e.totals == nil {
+		e.totals = make(map[ExtraPaymentType]float64)
+	}
 	e.totals[payment.T] += payment.Value
 }
 
 func (e *ExtraPaymentsCollection) ToDto() ExtraPaymentsCollectionDto {
+	if e == nil {
+		return ExtraPaymentsCollectionDto{}
+	}
 	total := 0.0
 
 	for _, t := range e.totals {
@@ -54,6 +63,9 @@ func (e *ExtraPaymentsCollection) ToDto() ExtraPaymentsCollectionDto {
 }
 
 func (e *ExtraPaymentsCollection) Total() map[ExtraPaymentType]float64 {
+	if e == nil {
+		return nil
+	}
 	return e.totals
 }
 

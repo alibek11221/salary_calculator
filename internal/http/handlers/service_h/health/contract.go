@@ -28,7 +28,7 @@ type Checker interface {
 
 type Status struct {
 	Name    string    `json:"name"`
-	Status  string    `json:"status"` // "healthy", "unhealthy"
+	Status  string    `json:"status"`
 	Message string    `json:"message,omitempty"`
 	Time    time.Time `json:"timestamp"`
 }
@@ -63,7 +63,7 @@ type MemoryInfo struct {
 }
 
 type Response struct {
-	Status   string     `json:"status"` // "healthy", "unhealthy"
+	Status   string     `json:"status"`
 	Services []Status   `json:"services,omitempty"`
 	System   SystemInfo `json:"system"`
 	Memory   MemoryInfo `json:"memory"`
