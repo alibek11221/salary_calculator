@@ -39,7 +39,7 @@ func TestUsecase_Do(t *testing.T) {
 				ctx: context.Background(),
 				in: add_salay_change.In{
 					Value: 100000,
-					Date:  *sd,
+					Date:  sd,
 				},
 			},
 			setup: func(f fields) {
@@ -56,7 +56,7 @@ func TestUsecase_Do(t *testing.T) {
 				ctx: context.Background(),
 				in: add_salay_change.In{
 					Value: 100000,
-					Date:  *sd,
+					Date:  sd,
 				},
 			},
 			setup: func(f fields) {
@@ -70,7 +70,7 @@ func TestUsecase_Do(t *testing.T) {
 				ctx: context.Background(),
 				in: add_salay_change.In{
 					Value: 100000,
-					Date:  *sd,
+					Date:  sd,
 				},
 			},
 			setup: func(f fields) {

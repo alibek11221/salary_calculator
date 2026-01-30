@@ -39,7 +39,7 @@ func TestUsecase_Do(t *testing.T) {
 				ctx: context.Background(),
 				in: add_bonus_dto.In{
 					Value:       50000,
-					Date:        *sd,
+					Date:        sd,
 					Coefficient: 1.5,
 				},
 			},
@@ -58,7 +58,7 @@ func TestUsecase_Do(t *testing.T) {
 				ctx: context.Background(),
 				in: add_bonus_dto.In{
 					Value:       50000,
-					Date:        *sd,
+					Date:        sd,
 					Coefficient: 1.5,
 				},
 			},
@@ -73,7 +73,7 @@ func TestUsecase_Do(t *testing.T) {
 				ctx: context.Background(),
 				in: add_bonus_dto.In{
 					Value:       50000,
-					Date:        *sd,
+					Date:        sd,
 					Coefficient: 1.5,
 				},
 			},

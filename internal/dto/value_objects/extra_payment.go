@@ -41,9 +41,15 @@ func (e *ExtraPaymentsCollection) Push(payment ExtraPayment) {
 }
 
 func (e *ExtraPaymentsCollection) ToDto() ExtraPaymentsCollectionDto {
+	total := 0.0
+
+	for _, t := range e.totals {
+		total += t
+	}
+
 	return ExtraPaymentsCollectionDto{
 		Payments: e.payments,
-		Totals:   e.totals,
+		Total:    total,
 	}
 }
 
@@ -52,6 +58,6 @@ func (e *ExtraPaymentsCollection) Total() map[ExtraPaymentType]float64 {
 }
 
 type ExtraPaymentsCollectionDto struct {
-	Payments []ExtraPayment               `json:"payments"`
-	Totals   map[ExtraPaymentType]float64 `json:"totals"`
+	Payments []ExtraPayment `json:"payments"`
+	Total    float64        `json:"total"`
 }

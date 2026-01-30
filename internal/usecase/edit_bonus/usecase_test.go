@@ -43,7 +43,7 @@ func TestUsecase_Do(t *testing.T) {
 				in: edit_bonus_dto.In{
 					ID:          validID,
 					Value:       75000,
-					Date:        *sd,
+					Date:        sd,
 					Coefficient: 2.0,
 				},
 			},
@@ -74,7 +74,7 @@ func TestUsecase_Do(t *testing.T) {
 				in: edit_bonus_dto.In{
 					ID:          validID,
 					Value:       75000,
-					Date:        *sd,
+					Date:        sd,
 					Coefficient: 2.0,
 				},
 			},

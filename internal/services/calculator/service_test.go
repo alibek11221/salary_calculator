@@ -1,10 +1,9 @@
 package calculator
 
 import (
-	"testing"
-
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/services/work_days"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -29,7 +28,7 @@ func TestService_CalculateSalary(t *testing.T) {
 					SecondHalfDays: 10,
 				},
 			),
-			extraPayments: value_objects.NewExtraPaymentsCollection(value_objects.Advance),
+			extraPayments: value_objects.NewExtraPaymentsCollection(),
 			want: SalaryCalculationResult{
 				GrossAdvance:  100000,
 				GrossSalary:   100000,
@@ -51,7 +50,7 @@ func TestService_CalculateSalary(t *testing.T) {
 					SecondHalfDays: 10,
 				},
 			),
-			extraPayments: value_objects.NewExtraPaymentsCollection(value_objects.Advance, value_objects.ExtraPayment{
+			extraPayments: value_objects.NewExtraPaymentsCollection(value_objects.ExtraPayment{
 				Name:  "Bonus",
 				Value: 10000,
 				T:     value_objects.Advance,
@@ -82,7 +81,7 @@ func TestService_CalculateSalary(t *testing.T) {
 					SecondHalfDays: 10,
 				},
 			),
-			extraPayments: value_objects.NewExtraPaymentsCollection(value_objects.Salary, value_objects.ExtraPayment{
+			extraPayments: value_objects.NewExtraPaymentsCollection(value_objects.ExtraPayment{
 				Name:  "Bonus",
 				Value: 10000,
 				T:     value_objects.Salary,
@@ -113,7 +112,7 @@ func TestService_CalculateSalary(t *testing.T) {
 					SecondHalfDays: 12,
 				},
 			),
-			extraPayments: value_objects.NewExtraPaymentsCollection(value_objects.Advance),
+			extraPayments: value_objects.NewExtraPaymentsCollection(),
 			want: SalaryCalculationResult{
 				GrossAdvance:  90909.09,  // 200000 / 22 * 10
 				GrossSalary:   109090.91, // 200000 / 22 * 12

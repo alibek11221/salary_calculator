@@ -3,12 +3,11 @@ package get_salary_changes_test
 import (
 	"context"
 	"errors"
-	"testing"
-
 	"salary_calculator/internal/dto/get_salary_changes"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
 	get_salary_changes_uc "salary_calculator/internal/usecase/get_salary_changes"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -47,7 +46,7 @@ func TestUsecase_Do(t *testing.T) {
 					{
 						ID:    validID,
 						Value: 100000,
-						Date:  *sd,
+						Date:  sd,
 					},
 				},
 			},
@@ -98,17 +97,17 @@ func TestUsecase_Do(t *testing.T) {
 					{
 						ID:    validID,
 						Value: 300000,
-						Date:  func() value_objects.SalaryDate { d, _ := value_objects.NewSalaryDate("2024_12"); return *d }(),
+						Date:  func() *value_objects.SalaryDate { d, _ := value_objects.NewSalaryDate("2024_12"); return d }(),
 					},
 					{
 						ID:    validID,
 						Value: 100000,
-						Date:  func() value_objects.SalaryDate { d, _ := value_objects.NewSalaryDate("2025_01"); return *d }(),
+						Date:  func() *value_objects.SalaryDate { d, _ := value_objects.NewSalaryDate("2025_01"); return d }(),
 					},
 					{
 						ID:    validID,
 						Value: 200000,
-						Date:  func() value_objects.SalaryDate { d, _ := value_objects.NewSalaryDate("2025_02"); return *d }(),
+						Date:  func() *value_objects.SalaryDate { d, _ := value_objects.NewSalaryDate("2025_02"); return d }(),
 					},
 				},
 			},

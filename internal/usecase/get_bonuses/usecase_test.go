@@ -48,7 +48,7 @@ func TestUsecase_Do(t *testing.T) {
 					{
 						ID:          validID,
 						Value:       50000,
-						Date:        *sd,
+						Date:        sd,
 						Coefficient: 1.5,
 					},
 				},

@@ -2,7 +2,6 @@ package get_bonuses
 
 import (
 	"context"
-
 	"salary_calculator/internal/dto/get_bonuses"
 	"salary_calculator/internal/dto/value_objects"
 )
@@ -32,7 +31,7 @@ func (u *usecase) Do(ctx context.Context) (*get_bonuses.Out, error) {
 		outBonuses[i] = get_bonuses.Bonus{
 			ID:          b.ID.String(),
 			Value:       b.Value,
-			Date:        *parsedDate,
+			Date:        parsedDate,
 			Coefficient: b.Coefficient,
 		}
 	}

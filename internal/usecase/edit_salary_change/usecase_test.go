@@ -43,7 +43,7 @@ func TestUsecase_Do(t *testing.T) {
 				in: edit_salary_change_dto.In{
 					ID:    validID,
 					Value: 120000,
-					Date:  *sd,
+					Date:  sd,
 				},
 			},
 			setup: func(f fields) {
@@ -72,7 +72,7 @@ func TestUsecase_Do(t *testing.T) {
 				in: edit_salary_change_dto.In{
 					ID:    validID,
 					Value: 120000,
-					Date:  *sd,
+					Date:  sd,
 				},
 			},
 			setup: func(f fields) {

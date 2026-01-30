@@ -58,11 +58,15 @@ func NewSalaryDate(date string) (*SalaryDate, error) {
 	}, nil
 }
 
-func From(year, month int) SalaryDate {
-	return SalaryDate{year: year, month: month, key: fmt.Sprintf("%d_%02d", year, month)}
+func From(year, month int) *SalaryDate {
+	return &SalaryDate{year: year, month: month, key: fmt.Sprintf("%d_%02d", year, month)}
 }
 
 func (s *SalaryDate) MarshalJSON() ([]byte, error) {
+	if s == nil {
+		return []byte("null"), nil
+	}
+
 	return json.Marshal(s.key)
 }
 
