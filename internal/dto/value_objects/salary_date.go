@@ -58,7 +58,11 @@ func NewSalaryDate(date string) (*SalaryDate, error) {
 	}, nil
 }
 
-func (s SalaryDate) MarshalJSON() ([]byte, error) {
+func From(year, month int) SalaryDate {
+	return SalaryDate{year: year, month: month, key: fmt.Sprintf("%d_%02d", year, month)}
+}
+
+func (s *SalaryDate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.key)
 }
 

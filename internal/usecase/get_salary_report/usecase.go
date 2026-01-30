@@ -2,16 +2,13 @@ package get_salary_report
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
-
 	"salary_calculator/internal/dto/get_salary_report"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
-	"salary_calculator/internal/pkg/http/work_calendar"
 	"salary_calculator/internal/pkg/utils"
-
-	"golang.org/x/sync/errgroup"
 )
 
 type usecase struct {
@@ -36,24 +33,20 @@ func New(
 }
 
 func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_report.Out, error) {
-	eg, ctx := errgroup.WithContext(ctx)
+	targetDate := value_objects.From(in.Year, in.Month)
 
-	var latestSalary *dbstore.SalaryChange
-	var wdr *work_calendar.WorkdayResponse
+	latestSalary, err := u.getLatestChange(ctx, &targetDate)
+	if err != nil {
+		return nil, err
+	}
 
-	eg.Go(func() error {
-		var err error
-		latestSalary, err = u.getLatestChange(ctx, in)
-		return err
-	})
+	b, err := u.r.GetBonusByDate(ctx, targetDate.String())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
 
-	eg.Go(func() error {
-		var err error
-		wdr, err = u.workdaysClient.GetWorkdaysForMonth(ctx, in.Month, in.Year)
-		return err
-	})
-
-	if err := eg.Wait(); err != nil {
+	wdr, err := u.workdaysClient.GetWorkdaysForMonth(ctx, in.Month, in.Year)
+	if err != nil {
 		return nil, err
 	}
 
@@ -62,10 +55,19 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 	sCtx := value_objects.NewSalaryContext(latestSalary.Salary, ndfl, wDays)
 
 	foodPay := 529 * wDays.TotalWorkdays
-	extraCollection := *value_objects.NewExtraPaymentsCollection(value_objects.Salary, value_objects.ExtraPayment{
+	extraCollection := *value_objects.NewExtraPaymentsCollection(value_objects.ExtraPayment{
 		Value: float64(foodPay),
 		Name:  "За еду",
+		T:     value_objects.Salary,
 	})
+
+	if b.ID.Valid {
+		extraCollection.Push(value_objects.ExtraPayment{
+			Value: b.Value,
+			Name:  "Бонус",
+			T:     value_objects.Advance,
+		})
+	}
 
 	calc := u.salaryCalculator.CalculateSalary(sCtx, extraCollection)
 
@@ -75,15 +77,13 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 	}, nil
 }
 
-func (u *usecase) getLatestChange(ctx context.Context, in get_salary_report.In) (*dbstore.SalaryChange, error) {
+func (u *usecase) getLatestChange(ctx context.Context, targetDate *value_objects.SalaryDate) (
+	*dbstore.SalaryChange,
+	error,
+) {
 	changes, err := u.r.ListChanges(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list salary changes: %w", err)
-	}
-
-	targetDate, err := value_objects.NewSalaryDate(fmt.Sprintf("%d_%d", in.Year, in.Month))
-	if err != nil {
-		return nil, fmt.Errorf("invalid input date: %w", err)
 	}
 
 	var latestChangeBeforeTarget *dbstore.SalaryChange

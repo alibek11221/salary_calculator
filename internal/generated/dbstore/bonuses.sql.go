@@ -21,16 +21,21 @@ func (q *Queries) DeleteBonus(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getBonusByDate = `-- name: GetBonusByDate :one
-SELECT id
+SELECT id, value, date, coefficient
 FROM bonuses
 WHERE date = $1
 `
 
-func (q *Queries) GetBonusByDate(ctx context.Context, date string) (pgtype.UUID, error) {
+func (q *Queries) GetBonusByDate(ctx context.Context, date string) (Bonuse, error) {
 	row := q.db.QueryRow(ctx, getBonusByDate, date)
-	var id pgtype.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i Bonuse
+	err := row.Scan(
+		&i.ID,
+		&i.Value,
+		&i.Date,
+		&i.Coefficient,
+	)
+	return i, err
 }
 
 const insertBonus = `-- name: InsertBonus :exec
