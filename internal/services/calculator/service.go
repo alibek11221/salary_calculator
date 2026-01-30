@@ -54,15 +54,10 @@ func (s *Service) calculateResult(
 		utils.SubPercentage(res.GrossSalary, sCtx.CurrentNDFL()),
 	)
 
-	extra := extraPayments
-	if extra.Type() == value_objects.Advance {
-		res.Advance += extra.Total()
-	}
-	if extra.Type() == value_objects.Salary {
-		res.Salary += extra.Total()
-	}
+	res.Advance += extraPayments.Total()[value_objects.Advance]
+	res.Salary += extraPayments.Total()[value_objects.Salary]
 
-	res.ExtraPayments = extra.ToDto()
+	res.ExtraPayments = extraPayments.ToDto()
 
 	res.GrossTotal = res.GrossSalary + res.GrossAdvance
 	res.Total = res.Salary + res.Advance

@@ -1,9 +1,5 @@
 package value_objects
 
-import (
-	"salary_calculator/internal/pkg/utils"
-)
-
 type ExtraPaymentType string
 
 const (
@@ -19,47 +15,43 @@ type ExtraPayment struct {
 
 type ExtraPaymentsCollection struct {
 	payments []ExtraPayment
-	total    float64
-	t        ExtraPaymentType
+	totals   map[ExtraPaymentType]float64
 }
 
-func NewExtraPaymentsCollection(t ExtraPaymentType, payments ...ExtraPayment) *ExtraPaymentsCollection {
-	total := 0.0
-
-	for _, payment := range payments {
-		total += payment.Value
+func NewExtraPaymentsCollection(payments ...ExtraPayment) *ExtraPaymentsCollection {
+	totals := make(map[ExtraPaymentType]float64, 2)
+	totals = map[ExtraPaymentType]float64{
+		Advance: 0,
+		Salary:  0,
 	}
 
-	total = utils.ToTwoDecimals(total)
+	for _, payment := range payments {
+		totals[payment.T] += payment.Value
+	}
 
 	return &ExtraPaymentsCollection{
 		payments: payments,
-		total:    total,
-		t:        t,
+		totals:   totals,
 	}
 }
 
 func (e *ExtraPaymentsCollection) Push(payment ExtraPayment) {
 	e.payments = append(e.payments, payment)
-	e.total += payment.Value
+	e.totals[payment.T] += payment.Value
 }
 
 func (e *ExtraPaymentsCollection) ToDto() ExtraPaymentsCollectionDto {
 	return ExtraPaymentsCollectionDto{
 		Payments: e.payments,
-		Total:    e.total,
+		Totals:   e.totals,
 	}
 }
 
-func (e *ExtraPaymentsCollection) Type() ExtraPaymentType {
-	return e.t
-}
-
-func (e *ExtraPaymentsCollection) Total() float64 {
-	return e.total
+func (e *ExtraPaymentsCollection) Total() map[ExtraPaymentType]float64 {
+	return e.totals
 }
 
 type ExtraPaymentsCollectionDto struct {
-	Payments []ExtraPayment `json:"payments"`
-	Total    float64        `json:"total"`
+	Payments []ExtraPayment               `json:"payments"`
+	Totals   map[ExtraPaymentType]float64 `json:"totals"`
 }

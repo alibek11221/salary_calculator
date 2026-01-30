@@ -4,7 +4,7 @@ FROM bonuses
 ORDER BY date;
 
 -- name: GetBonusByDate :one
-SELECT id
+SELECT *
 FROM bonuses
 WHERE date = $1;
 

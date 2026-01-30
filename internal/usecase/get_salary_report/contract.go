@@ -2,8 +2,7 @@ package get_salary_report
 
 import (
 	"context"
-
-	value_objects2 "salary_calculator/internal/dto/value_objects"
+	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
 	"salary_calculator/internal/pkg/http/work_calendar"
 	"salary_calculator/internal/services/calculator"
@@ -13,13 +12,14 @@ import (
 //go:generate mockgen -source=contract.go -destination mocks_test.go -package "${GOPACKAGE}_test"
 
 type repo interface {
+	GetBonusByDate(ctx context.Context, date string) (dbstore.Bonuse, error)
 	ListChanges(ctx context.Context) ([]dbstore.SalaryChange, error)
 }
 
 type salaryCalculator interface {
 	CalculateSalary(
-		sCtx value_objects2.SalaryCalculationContext,
-		extraPayments value_objects2.ExtraPaymentsCollection,
+		sCtx value_objects.SalaryCalculationContext,
+		extraPayments value_objects.ExtraPaymentsCollection,
 	) calculator.SalaryCalculationResult
 }
 

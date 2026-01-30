@@ -7,7 +7,6 @@ package get_salary_report_test
 import (
 	context "context"
 	reflect "reflect"
-
 	value_objects "salary_calculator/internal/dto/value_objects"
 	dbstore "salary_calculator/internal/generated/dbstore"
 	work_calendar "salary_calculator/internal/pkg/http/work_calendar"
@@ -38,6 +37,21 @@ func NewMockrepo(ctrl *gomock.Controller) *Mockrepo {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *Mockrepo) EXPECT() *MockrepoMockRecorder {
 	return m.recorder
+}
+
+// GetBonusByDate mocks base method.
+func (m *Mockrepo) GetBonusByDate(ctx context.Context, date string) (dbstore.Bonuse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBonusByDate", ctx, date)
+	ret0, _ := ret[0].(dbstore.Bonuse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBonusByDate indicates an expected call of GetBonusByDate.
+func (mr *MockrepoMockRecorder) GetBonusByDate(ctx, date interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBonusByDate", reflect.TypeOf((*Mockrepo)(nil).GetBonusByDate), ctx, date)
 }
 
 // ListChanges mocks base method.
