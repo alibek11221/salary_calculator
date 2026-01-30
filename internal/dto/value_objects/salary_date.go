@@ -16,6 +16,9 @@ type SalaryDate struct {
 }
 
 func (s *SalaryDate) String() string {
+	if s == nil {
+		return ""
+	}
 	return s.key
 }
 
@@ -88,6 +91,16 @@ func (s *SalaryDate) UnmarshalJSON(data []byte) error {
 }
 
 func (s *SalaryDate) Compare(other *SalaryDate) int {
+	if s == nil && other == nil {
+		return 0
+	}
+	if s == nil {
+		return -1
+	}
+	if other == nil {
+		return 1
+	}
+
 	if s.year < other.year {
 		return -1
 	}

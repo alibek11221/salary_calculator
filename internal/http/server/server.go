@@ -2,18 +2,16 @@ package server
 
 import (
 	"net/http"
-	"time"
-
 	_ "salary_calculator/docs"
 	"salary_calculator/internal/app"
 	"salary_calculator/internal/http/routes"
-	_ "salary_calculator/internal/pkg/logging"
+	"salary_calculator/internal/pkg/logging"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
-	"github.com/rs/zerolog/log"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -22,7 +20,7 @@ func NewServer(a *app.App) (*http.Server, error) {
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
+	r.Use(logging.GetChiMiddleware(a.Logger))
 	r.Use(middleware.Recoverer)
 	r.Use(httprate.LimitByRealIP(100, time.Minute))
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -40,7 +38,7 @@ func NewServer(a *app.App) (*http.Server, error) {
 	routeRegistrar.RegisterAll(r)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"), // Путь к сгенерированному swagger.json
+		httpSwagger.URL("/swagger/doc.json"),
 	))
 
 	server := &http.Server{
@@ -51,7 +49,7 @@ func NewServer(a *app.App) (*http.Server, error) {
 		MaxHeaderBytes: a.Config.Server.MaxHeaderBytes,
 	}
 
-	log.Info().
+	a.Logger.Info().
 		Str("port", a.Config.Port).
 		Msg("server initialized")
 

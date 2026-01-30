@@ -2,7 +2,7 @@ package edit_bonus
 
 import (
 	"context"
-
+	"errors"
 	"salary_calculator/internal/dto/edit_bonus"
 	"salary_calculator/internal/generated/dbstore"
 
@@ -18,6 +18,9 @@ func New(r repo) *usecase {
 }
 
 func (u *usecase) Do(ctx context.Context, in edit_bonus.In) (*edit_bonus.Out, error) {
+	if in.Date == nil {
+		return nil, errors.New("date is required")
+	}
 	var id pgtype.UUID
 	if err := id.Scan(in.ID); err != nil {
 		return nil, err

@@ -20,6 +20,7 @@ var (
 )
 
 type Config struct {
+	Env                  string
 	WorkCalendarApiToken string
 	Port                 string
 	WorkdaysTimeout      time.Duration
@@ -61,6 +62,7 @@ func GetConfig() *Config {
 
 func newConfig() *Config {
 	return &Config{
+		Env:                  getEnvWithDefault("ENV", "development"),
 		WorkCalendarApiToken: getEnvWithDefault("API_TOKEN", ""),
 		Port:                 getEnvWithDefault("PORT", "8080"),
 		WorkdaysTimeout:      envToDuration("WORKDAYS_TIMEOUT", defaultWorkdaysTimeout),
@@ -106,15 +108,6 @@ func getEnvAsInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if i, err := strconv.Atoi(value); err == nil {
 			return i
-		}
-	}
-	return defaultValue
-}
-
-func getEnvAsFloat(key string, defaultValue float64) float64 {
-	if value := os.Getenv(key); value != "" {
-		if f, err := strconv.ParseFloat(value, 64); err == nil {
-			return f
 		}
 	}
 	return defaultValue

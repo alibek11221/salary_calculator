@@ -2,7 +2,6 @@ package routes
 
 import (
 	"net/http"
-
 	"salary_calculator/internal/app"
 	"salary_calculator/internal/generated/dbstore"
 	"salary_calculator/internal/http/handlers/report/get_salary_report"
@@ -34,9 +33,9 @@ func NewSalaryRoutesRegistrar(a *app.App) *SalaryRoutesRegistrar {
 func (s *SalaryRoutesRegistrar) Register(router chi.Router) {
 	repo := dbstore.New(s.app.DB)
 	httpClient := &http.Client{}
-	cache := file.New[string, work_calendar.WorkdayResponse](s.app.Config.Cache.Dir, s.app.Config.Cache.TTL)
+	cache := file.New[string, work_calendar.WorkdayResponse](s.app.Config.Cache.Dir, s.app.Config.Cache.TTL, s.app.Logger)
 
-	workDaysClient := work_calendar.New(httpClient, cache, s.app.Config.WorkCalendarApiToken)
+	workDaysClient := work_calendar.New(httpClient, cache, s.app.Config.WorkCalendarApiToken, s.app.Logger)
 	workDaysCalc := work_days.New()
 	salaryCalc := calculator.New()
 

@@ -28,5 +28,5 @@ type workdaysClient interface {
 }
 
 type workdaysCalculator interface {
-	CalculateWorkDaysForMonth(month work_calendar.WorkdayResponse) work_days.WorkdaysForMonth
+	CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) work_days.WorkdaysForMonth
 }

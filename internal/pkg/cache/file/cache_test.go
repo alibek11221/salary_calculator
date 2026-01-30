@@ -2,6 +2,7 @@ package file
 
 import (
 	"os"
+	"salary_calculator/internal/pkg/logging"
 	"testing"
 	"time"
 
@@ -13,8 +14,9 @@ func TestCache(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
+	l := logging.New(false)
 	ttl := 1 * time.Hour
-	cache := New[string, string](tempDir, ttl)
+	cache := New[string, string](tempDir, ttl, l)
 
 	key := "test_key"
 	val := "test_value"
@@ -31,7 +33,7 @@ func TestCache(t *testing.T) {
 	assert.Equal(t, val, v)
 
 	shortTTL := 10 * time.Millisecond
-	cacheShort := New[string, string](tempDir, shortTTL)
+	cacheShort := New[string, string](tempDir, shortTTL, l)
 	err = cacheShort.Put("short_key", "short_val")
 	assert.NoError(t, err)
 
@@ -46,7 +48,8 @@ func TestCache_Errors(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	cache := New[string, string](tempDir, 1*time.Hour)
+	l := logging.New(false)
+	cache := New[string, string](tempDir, 1*time.Hour, l)
 
 	t.Run("invalid_gzip", func(t *testing.T) {
 		err := os.WriteFile(tempDir+"/invalid.json.gz", []byte("not gzip"), 0o644)
@@ -63,7 +66,8 @@ func TestCache_IntKey(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	cache := New[int, int](tempDir, 1*time.Hour)
+	l := logging.New(false)
+	cache := New[int, int](tempDir, 1*time.Hour, l)
 	err = cache.Put(123, 456)
 	assert.NoError(t, err)
 

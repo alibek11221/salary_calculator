@@ -59,7 +59,7 @@ func TestService_CalculateSalary(t *testing.T) {
 				GrossAdvance: 100000,
 				GrossSalary:  100000,
 				GrossTotal:   200000,
-				Advance:      97000, // 87000 + 10000
+				Advance:      97000,
 				Salary:       87000,
 				Total:        184000,
 				ExtraPayments: value_objects.ExtraPaymentsCollectionDto{
@@ -91,7 +91,7 @@ func TestService_CalculateSalary(t *testing.T) {
 				GrossSalary:  100000,
 				GrossTotal:   200000,
 				Advance:      87000,
-				Salary:       97000, // 87000 + 10000
+				Salary:       97000,
 				Total:        184000,
 				ExtraPayments: value_objects.ExtraPaymentsCollectionDto{
 					Payments: []value_objects.ExtraPayment{
@@ -114,11 +114,11 @@ func TestService_CalculateSalary(t *testing.T) {
 			),
 			extraPayments: value_objects.NewExtraPaymentsCollection(),
 			want: SalaryCalculationResult{
-				GrossAdvance:  90909.09,  // 200000 / 22 * 10
-				GrossSalary:   109090.91, // 200000 / 22 * 12
+				GrossAdvance:  90909.09,
+				GrossSalary:   109090.91,
 				GrossTotal:    200000,
-				Advance:       79090.91, // 90909.09 * 0.87
-				Salary:        94909.09, // 109090.91 * 0.87
+				Advance:       79090.91,
+				Salary:        94909.09,
 				Total:         174000,
 				ExtraPayments: value_objects.ExtraPaymentsCollectionDto{Payments: nil, Total: 0},
 			},

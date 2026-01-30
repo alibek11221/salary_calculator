@@ -66,6 +66,9 @@ func (s *Service) calculateResult(
 }
 
 func (s *Service) calculateGrossAmount(base float64, totalDays, workedDays int) float64 {
+	if totalDays <= 0 {
+		return 0
+	}
 	out := base / float64(totalDays) * float64(workedDays)
 
 	return out

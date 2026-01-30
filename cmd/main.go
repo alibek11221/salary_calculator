@@ -14,19 +14,10 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
-
-	env := os.Getenv("APP_ENV")
-	if env == "production" {
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	} else {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	}
 }
 
 // @title Salary Calculator API
@@ -36,16 +27,16 @@ func init() {
 // @BasePath /api/v1
 func main() {
 	cfg := config.GetConfig()
-
 	a, err := app.New(cfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot initialize app")
-		os.Exit(1)
+		panic("cannot initialize app: " + err.Error())
 	}
+
+	logger := a.Logger
 
 	srv, err := server.NewServer(a)
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create server")
+		logger.Fatal().Err(err).Msg("cannot create server")
 		os.Exit(1)
 	}
 
@@ -57,15 +48,15 @@ func main() {
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Error().Err(err).Msg("server shutdown failed")
+			logger.Error().Err(err).Msg("server shutdown failed")
 		}
 	}()
 
-	log.Info().
+	logger.Info().
 		Str("port", cfg.Port).
 		Msg("starting server")
 
 	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		log.Error().Err(err).Msg("server stopped unexpectedly")
+		logger.Error().Err(err).Msg("server stopped unexpectedly")
 	}
 }

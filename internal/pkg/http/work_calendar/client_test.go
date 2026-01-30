@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"testing"
-
 	"salary_calculator/internal/pkg/http/work_calendar"
+	"salary_calculator/internal/pkg/logging"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -91,8 +91,9 @@ func TestClient_GetWorkdaysForYear(t *testing.T) {
 			ctx := context.Background()
 			cache := NewMockcache(ctrl)
 			client := NewMockhttpClient(ctrl)
+			l := logging.New(false)
 
-			service := work_calendar.New(client, cache, token)
+			service := work_calendar.New(client, cache, token, l)
 
 			tt.setupMocks(cache, client)
 
@@ -173,7 +174,8 @@ func TestClient_GetWorkdaysForMonth(t *testing.T) {
 			ctx := context.Background()
 			cache := NewMockcache(ctrl)
 			client := NewMockhttpClient(ctrl)
-			service := work_calendar.New(client, cache, token)
+			l := logging.New(false)
+			service := work_calendar.New(client, cache, token, l)
 
 			tt.setupMocks(cache, client)
 
@@ -194,7 +196,8 @@ func TestClient_Request_Errors(t *testing.T) {
 		defer ctrl.Finish()
 
 		client := NewMockhttpClient(ctrl)
-		service := work_calendar.New(client, nil, token)
+		l := logging.New(false)
+		service := work_calendar.New(client, nil, token, l)
 
 		client.EXPECT().Do(gomock.Any()).Return(&http.Response{
 			StatusCode: http.StatusInternalServerError,
@@ -212,7 +215,8 @@ func TestClient_Request_Errors(t *testing.T) {
 		defer ctrl.Finish()
 
 		client := NewMockhttpClient(ctrl)
-		service := work_calendar.New(client, nil, token)
+		l := logging.New(false)
+		service := work_calendar.New(client, nil, token, l)
 
 		client.EXPECT().Do(gomock.Any()).Return(&http.Response{
 			StatusCode: http.StatusOK,

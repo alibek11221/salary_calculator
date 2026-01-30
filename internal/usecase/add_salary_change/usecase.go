@@ -3,7 +3,6 @@ package add_salary_change
 import (
 	"context"
 	"errors"
-
 	"salary_calculator/internal/dto/add_salay_change"
 	"salary_calculator/internal/generated/dbstore"
 
@@ -21,6 +20,9 @@ func New(r repo) *usecase {
 }
 
 func (u *usecase) Do(ctx context.Context, in add_salay_change.In) (*add_salay_change.Out, error) {
+	if in.Date == nil {
+		return nil, errors.New("date is required")
+	}
 	model := dbstore.InsertChangeParams{
 		Salary:     in.Value,
 		ChangeFrom: in.Date.String(),

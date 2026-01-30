@@ -18,7 +18,7 @@ type Handler struct {
 
 func New(checkers []Checker, timeout time.Duration) *Handler {
 	if timeout == 0 {
-		timeout = 5 * time.Second // default timeout
+		timeout = 5 * time.Second
 	}
 
 	return &Handler{
