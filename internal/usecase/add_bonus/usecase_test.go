@@ -3,12 +3,12 @@ package add_bonus_test
 import (
 	"context"
 	"errors"
-	"testing"
-
 	add_bonus_dto "salary_calculator/internal/dto/add_bonus"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
+	"salary_calculator/internal/pkg/database"
 	add_bonus_uc "salary_calculator/internal/usecase/add_bonus"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -63,7 +63,7 @@ func TestUsecase_Do(t *testing.T) {
 				},
 			},
 			setup: func(f fields) {
-				f.r.EXPECT().InsertBonus(gomock.Any(), gomock.Any()).Return(&pgconn.PgError{Code: add_bonus_uc.DuplicateEntryCode})
+				f.r.EXPECT().InsertBonus(gomock.Any(), gomock.Any()).Return(&pgconn.PgError{Code: database.DuplicateEntryCode})
 			},
 			wantErr: add_bonus_uc.ErrDuplicateBonus,
 		},

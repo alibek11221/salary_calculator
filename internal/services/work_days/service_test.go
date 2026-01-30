@@ -15,7 +15,7 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 	tests := []struct {
 		name  string
 		month work_calendar.WorkdayResponse
-		want  WorkdaysForMonth
+		want  *WorkdaysForMonth
 		isNil bool
 	}{
 		{
@@ -32,7 +32,7 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 					{Date: types.Date{Time: time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC)}, TypeId: 2},
 				},
 			},
-			want: WorkdaysForMonth{
+			want: &WorkdaysForMonth{
 				TotalWorkdays:  20,
 				FirstHalfDays:  4,
 				SecondHalfDays: 2,
@@ -47,7 +47,7 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 					{Date: types.Date{Time: time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC)}, TypeId: 5},
 				},
 			},
-			want: WorkdaysForMonth{
+			want: &WorkdaysForMonth{
 				TotalWorkdays:  20,
 				FirstHalfDays:  1,
 				SecondHalfDays: 1,
@@ -56,7 +56,7 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 		{
 			name:  "Nil response",
 			month: work_calendar.WorkdayResponse{},
-			want:  WorkdaysForMonth{},
+			want:  nil,
 			isNil: true,
 		},
 	}

@@ -54,19 +54,19 @@ func (mr *MockrepoMockRecorder) GetBonusByDate(ctx, date interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBonusByDate", reflect.TypeOf((*Mockrepo)(nil).GetBonusByDate), ctx, date)
 }
 
-// ListChanges mocks base method.
-func (m *Mockrepo) ListChanges(ctx context.Context) ([]dbstore.SalaryChange, error) {
+// GetLatestChangeBeforeDate mocks base method.
+func (m *Mockrepo) GetLatestChangeBeforeDate(ctx context.Context, changeFrom string) (dbstore.SalaryChange, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListChanges", ctx)
-	ret0, _ := ret[0].([]dbstore.SalaryChange)
+	ret := m.ctrl.Call(m, "GetLatestChangeBeforeDate", ctx, changeFrom)
+	ret0, _ := ret[0].(dbstore.SalaryChange)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListChanges indicates an expected call of ListChanges.
-func (mr *MockrepoMockRecorder) ListChanges(ctx interface{}) *gomock.Call {
+// GetLatestChangeBeforeDate indicates an expected call of GetLatestChangeBeforeDate.
+func (mr *MockrepoMockRecorder) GetLatestChangeBeforeDate(ctx, changeFrom interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListChanges", reflect.TypeOf((*Mockrepo)(nil).ListChanges), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestChangeBeforeDate", reflect.TypeOf((*Mockrepo)(nil).GetLatestChangeBeforeDate), ctx, changeFrom)
 }
 
 // MocksalaryCalculator is a mock of salaryCalculator interface.
@@ -168,10 +168,10 @@ func (m *MockworkdaysCalculator) EXPECT() *MockworkdaysCalculatorMockRecorder {
 }
 
 // CalculateWorkDaysForMonth mocks base method.
-func (m *MockworkdaysCalculator) CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) work_days.WorkdaysForMonth {
+func (m *MockworkdaysCalculator) CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) *work_days.WorkdaysForMonth {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CalculateWorkDaysForMonth", month)
-	ret0, _ := ret[0].(work_days.WorkdaysForMonth)
+	ret0, _ := ret[0].(*work_days.WorkdaysForMonth)
 	return ret0
 }
 

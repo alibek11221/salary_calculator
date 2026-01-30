@@ -13,7 +13,7 @@ import (
 
 type repo interface {
 	GetBonusByDate(ctx context.Context, date string) (dbstore.Bonuse, error)
-	ListChanges(ctx context.Context) ([]dbstore.SalaryChange, error)
+	GetLatestChangeBeforeDate(ctx context.Context, changeFrom string) (dbstore.SalaryChange, error)
 }
 
 type salaryCalculator interface {
@@ -28,5 +28,5 @@ type workdaysClient interface {
 }
 
 type workdaysCalculator interface {
-	CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) work_days.WorkdaysForMonth
+	CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) *work_days.WorkdaysForMonth
 }

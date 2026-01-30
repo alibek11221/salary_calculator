@@ -7,7 +7,6 @@ package edit_bonus_test
 import (
 	context "context"
 	reflect "reflect"
-
 	edit_bonus "salary_calculator/internal/dto/edit_bonus"
 
 	gomock "github.com/golang/mock/gomock"

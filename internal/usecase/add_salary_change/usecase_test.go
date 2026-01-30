@@ -3,12 +3,12 @@ package add_salary_change_test
 import (
 	"context"
 	"errors"
-	"testing"
-
-	"salary_calculator/internal/dto/add_salay_change"
+	add_salary_change_dto "salary_calculator/internal/dto/add_salary_change"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
-	"salary_calculator/internal/usecase/add_salary_change"
+	"salary_calculator/internal/pkg/database"
+	add_salary_change_uc "salary_calculator/internal/usecase/add_salary_change"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -21,7 +21,7 @@ func TestUsecase_Do(t *testing.T) {
 	}
 	type args struct {
 		ctx context.Context
-		in  add_salay_change.In
+		in  add_salary_change_dto.In
 	}
 
 	sd, _ := value_objects.NewSalaryDate("2025_01")
@@ -30,14 +30,14 @@ func TestUsecase_Do(t *testing.T) {
 		name    string
 		setup   func(f fields)
 		args    args
-		want    *add_salay_change.Out
+		want    *add_salary_change_dto.Out
 		wantErr error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				in: add_salay_change.In{
+				in: add_salary_change_dto.In{
 					Value: 100000,
 					Date:  sd,
 				},
@@ -48,27 +48,27 @@ func TestUsecase_Do(t *testing.T) {
 					ChangeFrom: sd.String(),
 				}).Return(nil)
 			},
-			want: &add_salay_change.Out{Ok: true},
+			want: &add_salary_change_dto.Out{Ok: true},
 		},
 		{
 			name: "duplicate error",
 			args: args{
 				ctx: context.Background(),
-				in: add_salay_change.In{
+				in: add_salary_change_dto.In{
 					Value: 100000,
 					Date:  sd,
 				},
 			},
 			setup: func(f fields) {
-				f.r.EXPECT().InsertChange(gomock.Any(), gomock.Any()).Return(&pgconn.PgError{Code: add_salary_change.DuplicateEntryCode})
+				f.r.EXPECT().InsertChange(gomock.Any(), gomock.Any()).Return(&pgconn.PgError{Code: database.DuplicateEntryCode})
 			},
-			wantErr: add_salary_change.ErrDuplicateSalaryChange,
+			wantErr: add_salary_change_uc.ErrDuplicateSalaryChange,
 		},
 		{
 			name: "other error",
 			args: args{
 				ctx: context.Background(),
-				in: add_salay_change.In{
+				in: add_salary_change_dto.In{
 					Value: 100000,
 					Date:  sd,
 				},
@@ -91,7 +91,7 @@ func TestUsecase_Do(t *testing.T) {
 				tt.setup(f)
 			}
 
-			u := add_salary_change.New(f.r)
+			u := add_salary_change_uc.New(f.r)
 			got, err := u.Do(tt.args.ctx, tt.args.in)
 
 			if tt.wantErr != nil {

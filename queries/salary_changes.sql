@@ -1,7 +1,14 @@
 -- name: ListChanges :many
 SELECT *
 FROM salary_changes
-ORDER BY id;
+ORDER BY change_from ASC;
+
+-- name: GetLatestChangeBeforeDate :one
+SELECT *
+FROM salary_changes
+WHERE change_from <= $1
+ORDER BY change_from DESC
+LIMIT 1;
 
 -- name: GetChangeByDate :one
 SELECT id

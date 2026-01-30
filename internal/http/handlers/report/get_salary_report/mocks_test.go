@@ -7,7 +7,6 @@ package get_salary_report_test
 import (
 	context "context"
 	reflect "reflect"
-
 	get_salary_report "salary_calculator/internal/dto/get_salary_report"
 
 	gomock "github.com/golang/mock/gomock"

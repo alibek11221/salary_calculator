@@ -16,8 +16,8 @@ type WorkdaysForMonth struct {
 	SecondHalfDays int `json:"second_half_days"`
 }
 
-func (s *Service) CalculateWorkDays(months map[int]*work_calendar.WorkdayResponse) map[int]WorkdaysForMonth {
-	out := make(map[int]WorkdaysForMonth, len(months))
+func (s *Service) CalculateWorkDays(months map[int]*work_calendar.WorkdayResponse) map[int]*WorkdaysForMonth {
+	out := make(map[int]*WorkdaysForMonth, len(months))
 
 	for k, v := range months {
 		if v == nil {
@@ -31,12 +31,12 @@ func (s *Service) CalculateWorkDays(months map[int]*work_calendar.WorkdayRespons
 	return out
 }
 
-func (s *Service) CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) WorkdaysForMonth {
+func (s *Service) CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) *WorkdaysForMonth {
 	if month == nil {
-		return WorkdaysForMonth{}
+		return nil
 	}
 
-	out := WorkdaysForMonth{
+	out := &WorkdaysForMonth{
 		TotalWorkdays: month.Statistics.WorkDays,
 	}
 

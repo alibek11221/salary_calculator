@@ -34,9 +34,8 @@ func New(client httpClient, cache cache, token string, logger logging.Logger) *S
 	}
 }
 
-func (s *Service) GetWorkdaysForYear(ctx context.Context) (map[int]WorkdayResponse, error) {
-	start := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
-	year := 2026
+func (s *Service) GetWorkdaysForYear(ctx context.Context, year int) (map[int]WorkdayResponse, error) {
+	start := time.Now()
 	results := make(map[int]WorkdayResponse, 12)
 	monthsToFetch := make([]int, 0, 12)
 	urls := make([]string, 0, 12)

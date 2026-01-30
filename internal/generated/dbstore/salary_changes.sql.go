@@ -34,6 +34,21 @@ func (q *Queries) GetChangeByDate(ctx context.Context, changeFrom string) (pgtyp
 	return id, err
 }
 
+const getLatestChangeBeforeDate = `-- name: GetLatestChangeBeforeDate :one
+SELECT id, salary, change_from
+FROM salary_changes
+WHERE change_from <= $1
+ORDER BY change_from DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLatestChangeBeforeDate(ctx context.Context, changeFrom string) (SalaryChange, error) {
+	row := q.db.QueryRow(ctx, getLatestChangeBeforeDate, changeFrom)
+	var i SalaryChange
+	err := row.Scan(&i.ID, &i.Salary, &i.ChangeFrom)
+	return i, err
+}
+
 const insertChange = `-- name: InsertChange :exec
 INSERT INTO salary_changes (salary, change_from)
 VALUES ($1, $2)
@@ -57,7 +72,7 @@ type InsertChangesParams struct {
 const listChanges = `-- name: ListChanges :many
 SELECT id, salary, change_from
 FROM salary_changes
-ORDER BY id
+ORDER BY change_from ASC
 `
 
 func (q *Queries) ListChanges(ctx context.Context) ([]SalaryChange, error) {

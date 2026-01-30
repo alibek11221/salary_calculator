@@ -97,7 +97,7 @@ func TestClient_GetWorkdaysForYear(t *testing.T) {
 
 			tt.setupMocks(cache, client)
 
-			res, err := service.GetWorkdaysForYear(ctx)
+			res, err := service.GetWorkdaysForYear(ctx, 2026)
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Nil(t, res)

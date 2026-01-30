@@ -7,7 +7,6 @@ package delete_salary_change_test
 import (
 	context "context"
 	reflect "reflect"
-
 	delete_salary_change "salary_calculator/internal/dto/delete_salary_change"
 
 	gomock "github.com/golang/mock/gomock"
