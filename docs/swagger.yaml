@@ -1,140 +1,6 @@
 basePath: /api/v1
 definitions:
-  add_bonus.In:
-    properties:
-      coefficient:
-        type: number
-      date:
-        $ref: '#/definitions/value_objects.SalaryDate'
-      value:
-        type: number
-    type: object
-  add_bonus.Out:
-    properties:
-      ok:
-        type: boolean
-    type: object
-  add_salay_change.In:
-    properties:
-      date:
-        $ref: '#/definitions/value_objects.SalaryDate'
-      value:
-        type: number
-    type: object
-  add_salay_change.Out:
-    properties:
-      ok:
-        type: boolean
-    type: object
-  calculator.SalaryCalculationResult:
-    properties:
-      advance:
-        type: number
-      extra_payments:
-        $ref: '#/definitions/value_objects.ExtraPaymentsCollectionDto'
-      grossAdvance:
-        type: number
-      grossSalary:
-        type: number
-      grossTotal:
-        type: number
-      salary:
-        type: number
-      total:
-        type: number
-    type: object
-  delete_bonus.In:
-    properties:
-      id:
-        type: string
-    type: object
-  delete_bonus.Out:
-    properties:
-      ok:
-        type: boolean
-    type: object
-  delete_salary_change.In:
-    properties:
-      id:
-        type: string
-    type: object
-  delete_salary_change.Out:
-    properties:
-      ok:
-        type: boolean
-    type: object
-  edit_bonus.In:
-    properties:
-      coefficient:
-        type: number
-      date:
-        $ref: '#/definitions/value_objects.SalaryDate'
-      id:
-        type: string
-      value:
-        type: number
-    type: object
-  edit_bonus.Out:
-    properties:
-      ok:
-        type: boolean
-    type: object
-  edit_salary_change.In:
-    properties:
-      date:
-        $ref: '#/definitions/value_objects.SalaryDate'
-      id:
-        type: string
-      value:
-        type: number
-    type: object
-  edit_salary_change.Out:
-    properties:
-      ok:
-        type: boolean
-    type: object
-  get_bonuses.Bonus:
-    properties:
-      coefficient:
-        type: number
-      date:
-        $ref: '#/definitions/value_objects.SalaryDate'
-      id:
-        type: string
-      value:
-        type: number
-    type: object
-  get_bonuses.Out:
-    properties:
-      bonuses:
-        items:
-          $ref: '#/definitions/get_bonuses.Bonus'
-        type: array
-    type: object
-  get_salary_changes.Change:
-    properties:
-      date:
-        $ref: '#/definitions/value_objects.SalaryDate'
-      id:
-        type: string
-      value:
-        type: number
-    type: object
-  get_salary_changes.Out:
-    properties:
-      changes:
-        items:
-          $ref: '#/definitions/get_salary_changes.Change'
-        type: array
-    type: object
-  get_salary_report.Out:
-    properties:
-      base_salary:
-        type: number
-      result:
-        $ref: '#/definitions/calculator.SalaryCalculationResult'
-    type: object
-  health.MemoryInfo:
+  internal_http_handlers_health.MemoryInfo:
     properties:
       alloc:
         type: string
@@ -173,35 +39,33 @@ definitions:
       total_alloc:
         type: string
     type: object
-  health.Response:
+  internal_http_handlers_health.Response:
     properties:
       memory:
-        $ref: '#/definitions/health.MemoryInfo'
+        $ref: '#/definitions/internal_http_handlers_health.MemoryInfo'
       services:
         items:
-          $ref: '#/definitions/health.Status'
+          $ref: '#/definitions/internal_http_handlers_health.Status'
         type: array
       status:
-        description: '"healthy", "unhealthy"'
         type: string
       system:
-        $ref: '#/definitions/health.SystemInfo'
+        $ref: '#/definitions/internal_http_handlers_health.SystemInfo'
       timestamp:
         type: string
     type: object
-  health.Status:
+  internal_http_handlers_health.Status:
     properties:
       message:
         type: string
       name:
         type: string
       status:
-        description: '"healthy", "unhealthy"'
         type: string
       timestamp:
         type: string
     type: object
-  health.SystemInfo:
+  internal_http_handlers_health.SystemInfo:
     properties:
       cpu_cores:
         type: integer
@@ -212,33 +76,221 @@ definitions:
       uptime:
         type: string
     type: object
-  value_objects.ExtraPayment:
+  salary_calculator_internal_dto_add_bonus.In:
+    properties:
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      value:
+        type: number
+    type: object
+  salary_calculator_internal_dto_add_bonus.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_add_duty.In:
+    properties:
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      in_holidays:
+        type: integer
+      in_workdays:
+        type: integer
+    type: object
+  salary_calculator_internal_dto_add_duty.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_add_salary_change.In:
+    properties:
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      value:
+        type: number
+    type: object
+  salary_calculator_internal_dto_add_salary_change.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_delete_bonus.In:
+    properties:
+      id:
+        type: string
+    type: object
+  salary_calculator_internal_dto_delete_bonus.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_delete_duty.In:
+    properties:
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+    type: object
+  salary_calculator_internal_dto_delete_duty.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_delete_salary_change.In:
+    properties:
+      id:
+        type: string
+    type: object
+  salary_calculator_internal_dto_delete_salary_change.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_edit_bonus.In:
+    properties:
+      coefficient:
+        type: number
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  salary_calculator_internal_dto_edit_bonus.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_edit_duty.In:
+    properties:
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      in_holidays:
+        type: integer
+      in_workdays:
+        type: integer
+    type: object
+  salary_calculator_internal_dto_edit_duty.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_edit_salary_change.In:
+    properties:
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  salary_calculator_internal_dto_edit_salary_change.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_get_salary_report.Out:
+    properties:
+      base_salary:
+        type: number
+      result:
+        $ref: '#/definitions/salary_calculator_internal_services_calculator.SalaryCalculationResult'
+    type: object
+  salary_calculator_internal_dto_list_bonuses.Bonus:
+    properties:
+      coefficient:
+        type: number
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  salary_calculator_internal_dto_list_bonuses.Out:
+    properties:
+      bonuses:
+        items:
+          $ref: '#/definitions/salary_calculator_internal_dto_list_bonuses.Bonus'
+        type: array
+    type: object
+  salary_calculator_internal_dto_list_duties.DutyItem:
+    properties:
+      date:
+        type: string
+      in_holidays:
+        type: integer
+      in_workdays:
+        type: integer
+    type: object
+  salary_calculator_internal_dto_list_duties.Out:
+    properties:
+      duties:
+        items:
+          $ref: '#/definitions/salary_calculator_internal_dto_list_duties.DutyItem'
+        type: array
+    type: object
+  salary_calculator_internal_dto_list_salary_changes.Change:
+    properties:
+      date:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
+      id:
+        type: string
+      value:
+        type: number
+    type: object
+  salary_calculator_internal_dto_list_salary_changes.Out:
+    properties:
+      changes:
+        items:
+          $ref: '#/definitions/salary_calculator_internal_dto_list_salary_changes.Change'
+        type: array
+    type: object
+  salary_calculator_internal_dto_value_objects.ExtraPayment:
     properties:
       name:
         type: string
       type:
-        $ref: '#/definitions/value_objects.ExtraPaymentType'
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentType'
       value:
         type: number
     type: object
-  value_objects.ExtraPaymentType:
+  salary_calculator_internal_dto_value_objects.ExtraPaymentType:
     enum:
     - advance
     - salary
+    - extra
     type: string
     x-enum-varnames:
     - Advance
     - Salary
-  value_objects.ExtraPaymentsCollectionDto:
+    - Extra
+  salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto:
     properties:
       payments:
         items:
-          $ref: '#/definitions/value_objects.ExtraPayment'
+          $ref: '#/definitions/salary_calculator_internal_dto_value_objects.ExtraPayment'
         type: array
       total:
         type: number
     type: object
-  value_objects.SalaryDate:
+  salary_calculator_internal_dto_value_objects.SalaryDate:
+    type: object
+  salary_calculator_internal_services_calculator.SalaryCalculationResult:
+    properties:
+      advance:
+        type: number
+      extra_payments:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto'
+      grossAdvance:
+        type: number
+      grossSalary:
+        type: number
+      grossTotal:
+        type: number
+      salary:
+        type: number
+      total:
+        type: number
     type: object
 host: localhost:8080
 info:
@@ -258,14 +310,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/delete_bonus.In'
+          $ref: '#/definitions/salary_calculator_internal_dto_delete_bonus.In'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/delete_bonus.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_delete_bonus.Out'
         "400":
           description: error
           schema:
@@ -289,7 +341,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/get_bonuses.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_list_bonuses.Out'
         "500":
           description: error
           schema:
@@ -309,14 +361,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/add_bonus.In'
+          $ref: '#/definitions/salary_calculator_internal_dto_add_bonus.In'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/add_bonus.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_add_bonus.Out'
         "400":
           description: error
           schema:
@@ -342,14 +394,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/edit_bonus.In'
+          $ref: '#/definitions/salary_calculator_internal_dto_edit_bonus.In'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/edit_bonus.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_edit_bonus.Out'
         "400":
           description: error
           schema:
@@ -365,6 +417,124 @@ paths:
       summary: Редактировать бонус
       tags:
       - bonuses
+  /duties/:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет запись о дежурстве
+      parameters:
+      - description: ID дежурства
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/salary_calculator_internal_dto_delete_duty.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_delete_duty.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить дежурство
+      tags:
+      - duties
+    get:
+      description: Возвращает список всех зарегистрированных дежурств
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_list_duties.Out'
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Список дежурств
+      tags:
+      - duties
+    post:
+      consumes:
+      - application/json
+      description: Создает новую запись о дежурстве
+      parameters:
+      - description: Данные дежурства
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/salary_calculator_internal_dto_add_duty.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_add_duty.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить дежурство
+      tags:
+      - duties
+    put:
+      consumes:
+      - application/json
+      description: Обновляет данные существующего дежурства
+      parameters:
+      - description: Данные дежурства
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/salary_calculator_internal_dto_edit_duty.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_edit_duty.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Редактировать дежурство
+      tags:
+      - duties
   /health/health:
     get:
       description: Возвращает текущее состояние сервиса и системные метрики
@@ -374,11 +544,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.Response'
+            $ref: '#/definitions/internal_http_handlers_health.Response'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/health.Response'
+            $ref: '#/definitions/internal_http_handlers_health.Response'
       summary: Проверка здоровья
       tags:
       - health
@@ -393,14 +563,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/delete_salary_change.In'
+          $ref: '#/definitions/salary_calculator_internal_dto_delete_salary_change.In'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/delete_salary_change.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_delete_salary_change.Out'
         "400":
           description: error
           schema:
@@ -424,7 +594,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/get_salary_changes.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_list_salary_changes.Out'
         "500":
           description: error
           schema:
@@ -444,14 +614,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/add_salay_change.In'
+          $ref: '#/definitions/salary_calculator_internal_dto_add_salary_change.In'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/add_salay_change.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_add_salary_change.Out'
         "400":
           description: error
           schema:
@@ -477,14 +647,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/edit_salary_change.In'
+          $ref: '#/definitions/salary_calculator_internal_dto_edit_salary_change.In'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/edit_salary_change.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_edit_salary_change.Out'
         "400":
           description: error
           schema:
@@ -520,7 +690,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/get_salary_report.Out'
+            $ref: '#/definitions/salary_calculator_internal_dto_get_salary_report.Out'
         "400":
           description: error
           schema:

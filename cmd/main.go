@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
+	"time"
+
 	"salary_calculator/internal/app"
 	"salary_calculator/internal/config"
 	"salary_calculator/internal/http/server"
-	"syscall"
-	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"

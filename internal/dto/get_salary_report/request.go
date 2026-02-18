@@ -9,6 +9,6 @@ type In struct {
 	Month int `json:"month"`
 }
 type Out struct {
-	BaseSalary float64                            `json:"base_salary"`
-	Result     calculator.SalaryCalculationResult `json:"result"`
+	BaseSalary float64                             `json:"base_salary"`
+	Result     *calculator.SalaryCalculationResult `json:"result,omitempty"`
 }

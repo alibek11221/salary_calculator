@@ -2,9 +2,10 @@ package file
 
 import (
 	"os"
-	"salary_calculator/internal/pkg/logging"
 	"testing"
 	"time"
+
+	"salary_calculator/internal/pkg/logging"
 
 	"github.com/stretchr/testify/assert"
 )

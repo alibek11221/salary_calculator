@@ -12,7 +12,9 @@ import (
 )
 
 const deleteBonus = `-- name: DeleteBonus :exec
-DELETE FROM bonuses WHERE id = $1
+DELETE
+FROM bonuses
+WHERE id = $1
 `
 
 func (q *Queries) DeleteBonus(ctx context.Context, id pgtype.UUID) error {
@@ -21,7 +23,7 @@ func (q *Queries) DeleteBonus(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getBonusByDate = `-- name: GetBonusByDate :one
-SELECT id, value, date, coefficient
+SELECT id, value, date
 FROM bonuses
 WHERE date = $1
 `
@@ -29,33 +31,27 @@ WHERE date = $1
 func (q *Queries) GetBonusByDate(ctx context.Context, date string) (Bonuse, error) {
 	row := q.db.QueryRow(ctx, getBonusByDate, date)
 	var i Bonuse
-	err := row.Scan(
-		&i.ID,
-		&i.Value,
-		&i.Date,
-		&i.Coefficient,
-	)
+	err := row.Scan(&i.ID, &i.Value, &i.Date)
 	return i, err
 }
 
 const insertBonus = `-- name: InsertBonus :exec
-INSERT INTO bonuses (value, date, coefficient)
-VALUES ($1, $2, $3)
+INSERT INTO bonuses (value, date)
+VALUES ($1, $2)
 `
 
 type InsertBonusParams struct {
-	Value       float64
-	Date        string
-	Coefficient float64
+	Value float64
+	Date  string
 }
 
 func (q *Queries) InsertBonus(ctx context.Context, arg InsertBonusParams) error {
-	_, err := q.db.Exec(ctx, insertBonus, arg.Value, arg.Date, arg.Coefficient)
+	_, err := q.db.Exec(ctx, insertBonus, arg.Value, arg.Date)
 	return err
 }
 
 const listBonuses = `-- name: ListBonuses :many
-SELECT id, value, date, coefficient
+SELECT id, value, date
 FROM bonuses
 ORDER BY date
 `
@@ -69,12 +65,7 @@ func (q *Queries) ListBonuses(ctx context.Context) ([]Bonuse, error) {
 	var items []Bonuse
 	for rows.Next() {
 		var i Bonuse
-		if err := rows.Scan(
-			&i.ID,
-			&i.Value,
-			&i.Date,
-			&i.Coefficient,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.Value, &i.Date); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -86,26 +77,19 @@ func (q *Queries) ListBonuses(ctx context.Context) ([]Bonuse, error) {
 }
 
 const updateBonus = `-- name: UpdateBonus :exec
-UPDATE bonuses SET
-value = $2,
-date = $3,
-coefficient = $4
+UPDATE bonuses
+SET value       = $2,
+    date        = $3
 WHERE id = $1
 `
 
 type UpdateBonusParams struct {
-	ID          pgtype.UUID
-	Value       float64
-	Date        string
-	Coefficient float64
+	ID    pgtype.UUID
+	Value float64
+	Date  string
 }
 
 func (q *Queries) UpdateBonus(ctx context.Context, arg UpdateBonusParams) error {
-	_, err := q.db.Exec(ctx, updateBonus,
-		arg.ID,
-		arg.Value,
-		arg.Date,
-		arg.Coefficient,
-	)
+	_, err := q.db.Exec(ctx, updateBonus, arg.ID, arg.Value, arg.Date)
 	return err
 }

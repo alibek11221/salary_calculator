@@ -5,9 +5,8 @@ import (
 )
 
 type In struct {
-	Value       float64                   `json:"value"`
-	Date        *value_objects.SalaryDate `json:"date"`
-	Coefficient float64                   `json:"coefficient"`
+	Value float64                   `json:"value"`
+	Date  *value_objects.SalaryDate `json:"date"`
 }
 
 type Out struct {

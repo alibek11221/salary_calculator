@@ -29,7 +29,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/get_bonuses.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_list_bonuses.Out"
                         }
                     },
                     "500": {
@@ -62,7 +62,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/edit_bonus.In"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_bonus.In"
                         }
                     }
                 ],
@@ -70,7 +70,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/edit_bonus.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_bonus.Out"
                         }
                     },
                     "400": {
@@ -112,7 +112,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/add_bonus.In"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_bonus.In"
                         }
                     }
                 ],
@@ -120,7 +120,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/add_bonus.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_bonus.Out"
                         }
                     },
                     "400": {
@@ -162,7 +162,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delete_bonus.In"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_bonus.In"
                         }
                     }
                 ],
@@ -170,7 +170,186 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/delete_bonus.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_bonus.Out"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/duties/": {
+            "get": {
+                "description": "Возвращает список всех зарегистрированных дежурств",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "duties"
+                ],
+                "summary": "Список дежурств",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_list_duties.Out"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Обновляет данные существующего дежурства",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "duties"
+                ],
+                "summary": "Редактировать дежурство",
+                "parameters": [
+                    {
+                        "description": "Данные дежурства",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_duty.In"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_duty.Out"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Создает новую запись о дежурстве",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "duties"
+                ],
+                "summary": "Добавить дежурство",
+                "parameters": [
+                    {
+                        "description": "Данные дежурства",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_duty.In"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_duty.Out"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет запись о дежурстве",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "duties"
+                ],
+                "summary": "Удалить дежурство",
+                "parameters": [
+                    {
+                        "description": "ID дежурства",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_duty.In"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_duty.Out"
                         }
                     },
                     "400": {
@@ -208,13 +387,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.Response"
+                            "$ref": "#/definitions/internal_http_handlers_health.Response"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/health.Response"
+                            "$ref": "#/definitions/internal_http_handlers_health.Response"
                         }
                     }
                 }
@@ -234,7 +413,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/get_salary_changes.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_list_salary_changes.Out"
                         }
                     },
                     "500": {
@@ -267,7 +446,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/edit_salary_change.In"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_salary_change.In"
                         }
                     }
                 ],
@@ -275,7 +454,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/edit_salary_change.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_salary_change.Out"
                         }
                     },
                     "400": {
@@ -317,7 +496,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/add_salay_change.In"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_salary_change.In"
                         }
                     }
                 ],
@@ -325,7 +504,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/add_salay_change.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_salary_change.Out"
                         }
                     },
                     "400": {
@@ -367,7 +546,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delete_salary_change.In"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_salary_change.In"
                         }
                     }
                 ],
@@ -375,7 +554,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/delete_salary_change.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_salary_change.Out"
                         }
                     },
                     "400": {
@@ -429,7 +608,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/get_salary_report.Out"
+                            "$ref": "#/definitions/salary_calculator_internal_dto_get_salary_report.Out"
                         }
                     },
                     "400": {
@@ -455,217 +634,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "add_bonus.In": {
-            "type": "object",
-            "properties": {
-                "coefficient": {
-                    "type": "number"
-                },
-                "date": {
-                    "$ref": "#/definitions/value_objects.SalaryDate"
-                },
-                "value": {
-                    "type": "number"
-                }
-            }
-        },
-        "add_bonus.Out": {
-            "type": "object",
-            "properties": {
-                "ok": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "add_salay_change.In": {
-            "type": "object",
-            "properties": {
-                "date": {
-                    "$ref": "#/definitions/value_objects.SalaryDate"
-                },
-                "value": {
-                    "type": "number"
-                }
-            }
-        },
-        "add_salay_change.Out": {
-            "type": "object",
-            "properties": {
-                "ok": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "calculator.SalaryCalculationResult": {
-            "type": "object",
-            "properties": {
-                "advance": {
-                    "type": "number"
-                },
-                "extra_payments": {
-                    "$ref": "#/definitions/value_objects.ExtraPaymentsCollectionDto"
-                },
-                "grossAdvance": {
-                    "type": "number"
-                },
-                "grossSalary": {
-                    "type": "number"
-                },
-                "grossTotal": {
-                    "type": "number"
-                },
-                "salary": {
-                    "type": "number"
-                },
-                "total": {
-                    "type": "number"
-                }
-            }
-        },
-        "delete_bonus.In": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "delete_bonus.Out": {
-            "type": "object",
-            "properties": {
-                "ok": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "delete_salary_change.In": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "delete_salary_change.Out": {
-            "type": "object",
-            "properties": {
-                "ok": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "edit_bonus.In": {
-            "type": "object",
-            "properties": {
-                "coefficient": {
-                    "type": "number"
-                },
-                "date": {
-                    "$ref": "#/definitions/value_objects.SalaryDate"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "number"
-                }
-            }
-        },
-        "edit_bonus.Out": {
-            "type": "object",
-            "properties": {
-                "ok": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "edit_salary_change.In": {
-            "type": "object",
-            "properties": {
-                "date": {
-                    "$ref": "#/definitions/value_objects.SalaryDate"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "number"
-                }
-            }
-        },
-        "edit_salary_change.Out": {
-            "type": "object",
-            "properties": {
-                "ok": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "get_bonuses.Bonus": {
-            "type": "object",
-            "properties": {
-                "coefficient": {
-                    "type": "number"
-                },
-                "date": {
-                    "$ref": "#/definitions/value_objects.SalaryDate"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "number"
-                }
-            }
-        },
-        "get_bonuses.Out": {
-            "type": "object",
-            "properties": {
-                "bonuses": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/get_bonuses.Bonus"
-                    }
-                }
-            }
-        },
-        "get_salary_changes.Change": {
-            "type": "object",
-            "properties": {
-                "date": {
-                    "$ref": "#/definitions/value_objects.SalaryDate"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "number"
-                }
-            }
-        },
-        "get_salary_changes.Out": {
-            "type": "object",
-            "properties": {
-                "changes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/get_salary_changes.Change"
-                    }
-                }
-            }
-        },
-        "get_salary_report.Out": {
-            "type": "object",
-            "properties": {
-                "base_salary": {
-                    "type": "number"
-                },
-                "result": {
-                    "$ref": "#/definitions/calculator.SalaryCalculationResult"
-                }
-            }
-        },
-        "health.MemoryInfo": {
+        "internal_http_handlers_health.MemoryInfo": {
             "type": "object",
             "properties": {
                 "alloc": {
@@ -724,31 +693,30 @@ const docTemplate = `{
                 }
             }
         },
-        "health.Response": {
+        "internal_http_handlers_health.Response": {
             "type": "object",
             "properties": {
                 "memory": {
-                    "$ref": "#/definitions/health.MemoryInfo"
+                    "$ref": "#/definitions/internal_http_handlers_health.MemoryInfo"
                 },
                 "services": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/health.Status"
+                        "$ref": "#/definitions/internal_http_handlers_health.Status"
                     }
                 },
                 "status": {
-                    "description": "\"healthy\", \"unhealthy\"",
                     "type": "string"
                 },
                 "system": {
-                    "$ref": "#/definitions/health.SystemInfo"
+                    "$ref": "#/definitions/internal_http_handlers_health.SystemInfo"
                 },
                 "timestamp": {
                     "type": "string"
                 }
             }
         },
-        "health.Status": {
+        "internal_http_handlers_health.Status": {
             "type": "object",
             "properties": {
                 "message": {
@@ -758,7 +726,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "description": "\"healthy\", \"unhealthy\"",
                     "type": "string"
                 },
                 "timestamp": {
@@ -766,7 +733,7 @@ const docTemplate = `{
                 }
             }
         },
-        "health.SystemInfo": {
+        "internal_http_handlers_health.SystemInfo": {
             "type": "object",
             "properties": {
                 "cpu_cores": {
@@ -783,38 +750,306 @@ const docTemplate = `{
                 }
             }
         },
-        "value_objects.ExtraPayment": {
+        "salary_calculator_internal_dto_add_bonus.In": {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/value_objects.ExtraPaymentType"
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
                 },
                 "value": {
                     "type": "number"
                 }
             }
         },
-        "value_objects.ExtraPaymentType": {
+        "salary_calculator_internal_dto_add_bonus.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_add_duty.In": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                },
+                "in_holidays": {
+                    "type": "integer"
+                },
+                "in_workdays": {
+                    "type": "integer"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_add_duty.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_add_salary_change.In": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_add_salary_change.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_bonus.In": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_bonus.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_duty.In": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_duty.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_salary_change.In": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_salary_change.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_bonus.In": {
+            "type": "object",
+            "properties": {
+                "coefficient": {
+                    "type": "number"
+                },
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_bonus.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_duty.In": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                },
+                "in_holidays": {
+                    "type": "integer"
+                },
+                "in_workdays": {
+                    "type": "integer"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_duty.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_salary_change.In": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_salary_change.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_get_salary_report.Out": {
+            "type": "object",
+            "properties": {
+                "base_salary": {
+                    "type": "number"
+                },
+                "result": {
+                    "$ref": "#/definitions/salary_calculator_internal_services_calculator.SalaryCalculationResult"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_list_bonuses.Bonus": {
+            "type": "object",
+            "properties": {
+                "coefficient": {
+                    "type": "number"
+                },
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_list_bonuses.Out": {
+            "type": "object",
+            "properties": {
+                "bonuses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/salary_calculator_internal_dto_list_bonuses.Bonus"
+                    }
+                }
+            }
+        },
+        "salary_calculator_internal_dto_list_duties.DutyItem": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "in_holidays": {
+                    "type": "integer"
+                },
+                "in_workdays": {
+                    "type": "integer"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_list_duties.Out": {
+            "type": "object",
+            "properties": {
+                "duties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/salary_calculator_internal_dto_list_duties.DutyItem"
+                    }
+                }
+            }
+        },
+        "salary_calculator_internal_dto_list_salary_changes.Change": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_list_salary_changes.Out": {
+            "type": "object",
+            "properties": {
+                "changes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/salary_calculator_internal_dto_list_salary_changes.Change"
+                    }
+                }
+            }
+        },
+        "salary_calculator_internal_dto_value_objects.ExtraPayment": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentType"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_value_objects.ExtraPaymentType": {
             "type": "string",
             "enum": [
                 "advance",
-                "salary"
+                "salary",
+                "extra"
             ],
             "x-enum-varnames": [
                 "Advance",
-                "Salary"
+                "Salary",
+                "Extra"
             ]
         },
-        "value_objects.ExtraPaymentsCollectionDto": {
+        "salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto": {
             "type": "object",
             "properties": {
                 "payments": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/value_objects.ExtraPayment"
+                        "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.ExtraPayment"
                     }
                 },
                 "total": {
@@ -822,8 +1057,34 @@ const docTemplate = `{
                 }
             }
         },
-        "value_objects.SalaryDate": {
+        "salary_calculator_internal_dto_value_objects.SalaryDate": {
             "type": "object"
+        },
+        "salary_calculator_internal_services_calculator.SalaryCalculationResult": {
+            "type": "object",
+            "properties": {
+                "advance": {
+                    "type": "number"
+                },
+                "extra_payments": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto"
+                },
+                "grossAdvance": {
+                    "type": "number"
+                },
+                "grossSalary": {
+                    "type": "number"
+                },
+                "grossTotal": {
+                    "type": "number"
+                },
+                "salary": {
+                    "type": "number"
+                },
+                "total": {
+                    "type": "number"
+                }
+            }
         }
     }
 }`

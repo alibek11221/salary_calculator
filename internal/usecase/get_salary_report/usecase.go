@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"salary_calculator/internal/dto/get_salary_report"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
@@ -37,10 +38,8 @@ func New(
 
 func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_report.Out, error) {
 	targetDate := value_objects.From(in.Year, in.Month)
-
 	var (
 		latestSalary *dbstore.SalaryChange
-		b            dbstore.Bonuse
 		wdr          *wc.WorkdayResponse
 	)
 
@@ -56,16 +55,6 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 			return err
 		}
 		latestSalary = &latestSalaryRow
-
-		return nil
-	})
-
-	g.Go(func() error {
-		var err error
-		b, err = u.r.GetBonusByDate(gCtx, targetDate.String())
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
 
 		return nil
 	})
@@ -93,22 +82,10 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 	ndfl := utils.CalculateNDFL(latestSalary.Salary)
 	sCtx := value_objects.NewSalaryContext(latestSalary.Salary, ndfl, *wDays)
 
-	foodPay := 529 * wDays.TotalWorkdays
-	extraCollection := *value_objects.NewExtraPaymentsCollection(value_objects.ExtraPayment{
-		Value: float64(foodPay),
-		Name:  "За еду",
-		T:     value_objects.Salary,
-	})
-
-	if b.ID.Valid {
-		extraCollection.Push(value_objects.ExtraPayment{
-			Value: b.Value,
-			Name:  "Бонус",
-			T:     value_objects.Advance,
-		})
+	calc, err := u.salaryCalculator.CalculateSalary(ctx, *targetDate, sCtx)
+	if err != nil {
+		return nil, err
 	}
-
-	calc := u.salaryCalculator.CalculateSalary(sCtx, extraCollection)
 
 	return &get_salary_report.Out{
 		BaseSalary: latestSalary.Salary,

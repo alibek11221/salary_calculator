@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"salary_calculator/internal/pkg/logging"
 	"sync"
 	"time"
+
+	"salary_calculator/internal/pkg/logging"
 )
 
 type Cache[K comparable, V any] struct {
@@ -37,8 +38,7 @@ func New[K comparable, V any](dir string, ttl time.Duration, logger logging.Logg
 }
 
 type cacheEntry[V any] struct {
-	Value     V         `json:"value"`
-	ExpiresAt time.Time `json:"expires_at"`
+	Value V `json:"value"`
 }
 
 func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
@@ -73,11 +73,6 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 		return zero, false
 	}
 
-	if time.Now().After(entry.ExpiresAt) {
-		_ = os.Remove(filename)
-		return zero, false
-	}
-
 	return entry.Value, true
 }
 
@@ -95,8 +90,7 @@ func (c *Cache[K, V]) Put(key K, value V) error {
 	}()
 
 	entry := cacheEntry[V]{
-		Value:     value,
-		ExpiresAt: time.Now().Add(c.ttl),
+		Value: value,
 	}
 
 	if err := json.NewEncoder(buf).Encode(entry); err != nil {

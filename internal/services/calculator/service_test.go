@@ -1,9 +1,10 @@
 package calculator
 
 import (
+	"testing"
+
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/services/work_days"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )

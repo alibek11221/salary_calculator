@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"salary_calculator/internal/pkg/logging"
 	"sync"
 	"time"
+
+	"salary_calculator/internal/pkg/logging"
 
 	"golang.org/x/sync/errgroup"
 )
