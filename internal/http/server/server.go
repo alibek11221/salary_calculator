@@ -2,16 +2,16 @@ package server
 
 import (
 	"net/http"
+	"time"
+
 	_ "salary_calculator/docs"
 	"salary_calculator/internal/app"
 	"salary_calculator/internal/http/routes"
 	"salary_calculator/internal/pkg/logging"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-chi/httprate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -22,7 +22,7 @@ func NewServer(a *app.App) (*http.Server, error) {
 	r.Use(middleware.RealIP)
 	r.Use(logging.GetChiMiddleware(a.Logger))
 	r.Use(middleware.Recoverer)
-	r.Use(httprate.LimitByRealIP(100, time.Minute))
+	// r.Use(httprate.LimitByRealIP(100, time.Minute))
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Use(cors.Handler(cors.Options{

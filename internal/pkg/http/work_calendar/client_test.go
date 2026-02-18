@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"testing"
+
 	"salary_calculator/internal/pkg/http/work_calendar"
 	"salary_calculator/internal/pkg/logging"
-	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"

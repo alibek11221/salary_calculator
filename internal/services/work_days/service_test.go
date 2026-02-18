@@ -1,10 +1,11 @@
 package work_days
 
 import (
-	"salary_calculator/internal/pkg/http/work_calendar"
-	"salary_calculator/internal/pkg/types"
 	"testing"
 	"time"
+
+	"salary_calculator/internal/pkg/http/work_calendar"
+	"salary_calculator/internal/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 )

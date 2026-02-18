@@ -9,15 +9,16 @@ FROM bonuses
 WHERE date = $1;
 
 -- name: InsertBonus :exec
-INSERT INTO bonuses (value, date, coefficient)
-VALUES ($1, $2, $3);
+INSERT INTO bonuses (value, date)
+VALUES ($1, $2);
 
 -- name: UpdateBonus :exec
-UPDATE bonuses SET
-value = $2,
-date = $3,
-coefficient = $4
+UPDATE bonuses
+SET value = $2,
+    date  = $3
 WHERE id = $1;
 
 -- name: DeleteBonus :exec
-DELETE FROM bonuses WHERE id = $1;
+DELETE
+FROM bonuses
+WHERE id = $1;

@@ -1,4 +1,4 @@
-.PHONY: all build test lint clean run docker-* mock swagger-setup tools run-migrations mocks help
+.PHONY: all help build b run-local rl clean c fmt f fmt-strict fs fmt-check fc deps-update du deps-download dd tools t mocks mk sqlc-gen sqg swg swagger run-docker rd clean-docker cd restart-docker rsd full-reset fr run-migrations rm rollback-migrations rbm create-migration mc migrate-reset mres migrate-fresh mf migrate-status ms br
 
 # ==============================================================================
 # Variables
@@ -7,8 +7,8 @@
 APP_NAME=salary_calculator
 BUILD_DIR=bin
 DOCKER_COMPOSE=docker compose
+GO=go
 GO_FILES=$(shell find . -name '*.go' -not -path "./vendor/*")
-GOPATH=$(shell go env GOPATH)
 TOOLS_DIR=$(CURDIR)/tools/bin
 VENDOR_DIR=$(CURDIR)/vendor
 
@@ -16,14 +16,9 @@ VENDOR_DIR=$(CURDIR)/vendor
 MIGRATION_DIR=migrations
 DB_STRING="user=$(DB_USERNAME) password=$(DB_PASSWORD) dbname=$(DB_DATABASE) sslmode=disable host=$(DB_HOST) port=$(DB_PORT)"
 
-# Add tools/bin to PATH
-export PATH := $(TOOLS_DIR):$(PATH)
-
 # Load environment variables from .env file
-include .env
-export
+-include .env
 
-# section: Help
 # ==============================================================================
 # Help
 # ==============================================================================
@@ -31,54 +26,36 @@ export
 .DEFAULT_GOAL := help
 
 help: ## Show this help message
-	@awk 'BEGIN { \
-	  printf "\033[1;34m%-20s %-15s %s\033[0m\n", "Command", "Alias", "Description"; \
-	  printf "\033[1;34m%-20s %-15s %s\033[0m\n", "-------", "-----", "-----------"; \
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@awk '/^[a-zA-Z\-_0-9]+ [a-zA-Z\-_0-9 ]*:.*## / { \
+		helpMessage = match($$0, /## (.*)/); \
+		if (helpMessage) { \
+			helpCommand = substr($$0, 0, index($$0, ":")-1); \
+			helpMessage = substr($$0, RSTART + 3, RLENGTH); \
+			printf "  \033[36m%-20s\033[0m %s\n", helpCommand, helpMessage; \
+		} \
 	} \
-	/^# section: / { \
-	  current_section = substr($$0, 12); \
-	} \
-	/^[a-zA-Z_-]+:.*## .*$$/ { \
-	  split($$0, parts, ": .*## "); \
-	  target = parts[1]; \
-	  desc = parts[2]; \
-	  if (desc ~ /^Alias for /) { \
-	    split(desc, alias_parts, "Alias for "); \
-	    main_target = alias_parts[2]; \
-	    aliases[main_target] = target; \
-	  } else { \
-	    targets[target] = desc; \
-	    sections[target] = current_section; \
-	    section_order[current_section] = section_order[current_section] count + 1; \
-	    command_order[current_section, ++section_count[current_section]] = target; \
-	  } \
-	} \
-	END { \
-	  for (sect in section_order) { \
-	    printf "\n\033[1;36m%s\033[0m\n", sect; \
-	    printf "\033[1;36m%s\033[0m\n", "================================"; \
-	    for (i = 1; i <= section_count[sect]; i++) { \
-	      t = command_order[sect, i]; \
-	      alias = (t in aliases) ? aliases[t] : "-"; \
-	      printf "\033[33m%-20s\033[0m \033[32m%-15s\033[0m %s\n", t, alias, targets[t]; \
-	    } \
-	  } \
+	/^## [a-zA-Z &]+/ { \
+		printf "\n\033[1m%s\033[0m\n", substr($$0, 4); \
 	}' $(MAKEFILE_LIST)
 
-# section: Build & Run
 # ==============================================================================
 # Build & Run
 # ==============================================================================
 
-build: ## Build the application
+## Build & Run
+
+build b: ## Build the application
 	@rm -rf $(BUILD_DIR)
 	@echo "Building $(APP_NAME)..."
 	@go build -o $(BUILD_DIR)/$(APP_NAME) ./cmd/main.go
 
-run-local: ## Run the application locally
+run-local rl: ## Run the application locally
 	@go run ./cmd/main.go
 
-clean: ## Clean build artifacts
+clean c: ## Clean build artifacts
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 	@rm -rf tmp/cache
@@ -87,25 +64,30 @@ br: build ## Build and run the application
 	@echo "Starting application locally..."
 	@./$(BUILD_DIR)/$(APP_NAME)
 
-# section: Code Formatting
 # ==============================================================================
 # Code Formatting
 # ==============================================================================
 
-fmt-strict: ## Strict formatting with gofumpt and goimports
+## Formatting
+
+fmt f: fmt-strict ## Format code (alias for fmt-strict)
+
+fmt-strict fs: ## Strict formatting with gofumpt and goimports
 	@echo "Formatting Go code with gofumpt + goimports..."
-	@command -v gofumpt >/dev/null 2>&1 || go install mvdan.cc/gofumpt@latest
-	@command -v goimports >/dev/null 2>&1 || go install golang.org/x/tools/cmd/goimports@latest
-	@gofumpt -w $(GO_FILES)
-	@goimports -w -local salary_calculator $(GO_FILES)
+	@if [ ! -f "$(TOOLS_DIR)/gofumpt" ] || [ ! -f "$(TOOLS_DIR)/goimports" ]; then \
+		$(MAKE) tools; \
+	fi
+	@$(TOOLS_DIR)/gofumpt -w $(GO_FILES)
+	@$(TOOLS_DIR)/goimports -w -local salary_calculator $(GO_FILES)
 	@echo "Strict formatting done."
 
-fmt-check: ## Check formatting without changes
-	@command -v gofumpt >/dev/null 2>&1 || go install mvdan.cc/gofumpt@latest
-	@command -v goimports >/dev/null 2>&1 || go install golang.org/x/tools/cmd/goimports@latest
+fmt-check fc: ## Check formatting without changes
+	@if [ ! -f "$(TOOLS_DIR)/gofumpt" ] || [ ! -f "$(TOOLS_DIR)/goimports" ]; then \
+		$(MAKE) tools; \
+	fi
 	@echo "Checking formatting (gofumpt + goimports)..."
-	@GF_OUT=$$(gofumpt -l $(GO_FILES)); \
-	GI_OUT=$$(goimports -l -local salary_calculator $(GO_FILES)); \
+	@GF_OUT=$$($(TOOLS_DIR)/gofumpt -l $(GO_FILES)); \
+	GI_OUT=$$($(TOOLS_DIR)/goimports -l -local salary_calculator $(GO_FILES)); \
 	if [ -n "$$GF_OUT$$GI_OUT" ]; then \
 	  echo "Following files need formatting:"; \
 	  echo "$$GF_OUT"; \
@@ -115,52 +97,54 @@ fmt-check: ## Check formatting without changes
 	  echo "Formatting is OK"; \
 	fi
 
-# section: Dependencies
 # ==============================================================================
 # Dependencies
 # ==============================================================================
 
-deps-update: ## Update and tidy Go modules
+## Dependencies
+
+deps-update du: ## Update and tidy Go modules
 	@go mod tidy
 	@go mod verify
 	@go mod vendor
 
-deps-download: ## Download Go modules
+deps-download dd: ## Download Go modules
 	@go mod download
 
-# section: Tools & Code Generation
 # ==============================================================================
 # Tools & Code Generation
 # ==============================================================================
 
-tools: ## Install development tools (goose, sqlc, mockgen)
+## Tools & Generation
+
+tools t: ## Install development tools (goose, sqlc, mockgen, swag, gofumpt, goimports)
 	@echo "Deleting tools dir"
 	@rm -rf $(TOOLS_DIR)
 	@echo "Installing development tools"
 	@mkdir -p $(TOOLS_DIR)
-	@echo "Installing goose"
 	@GOBIN=$(TOOLS_DIR) go install github.com/pressly/goose/v3/cmd/goose@latest
-	@echo "Installing sqlc"
 	@GOBIN=$(TOOLS_DIR) go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-	@echo "Installing mockgen"
 	@GOBIN=$(TOOLS_DIR) go install github.com/golang/mock/mockgen@latest
+	@GOBIN=$(TOOLS_DIR) go install github.com/swaggo/swag/cmd/swag@latest
+	@GOBIN=$(TOOLS_DIR) go install mvdan.cc/gofumpt@latest
+	@GOBIN=$(TOOLS_DIR) go install golang.org/x/tools/cmd/goimports@latest
 	@echo "Tools installation completed"
 
-check-env: ## Check if .env file exists
+check-env ce: ## Check if .env file exists
 	@if [ ! -f .env ]; then \
 		echo "Error: .env file not found"; \
 		echo "Please copy .env.example to .env and configure it"; \
 		exit 1; \
 	fi
 
-mocks: ## Generate mocks
+mocks mk: ## Generate mocks
 	@if [ ! -f "$(TOOLS_DIR)/mockgen" ]; then \
 		$(MAKE) tools; \
 	fi
 	@echo "Generating mocks..."
 	@PATH=$(TOOLS_DIR):$(PATH) go generate ./...
 
-sqlc-gen: check-env ## Generate SQL code
+sqlc-gen sqg: check-env ## Generate SQL code
 	@if [ ! -f "$(TOOLS_DIR)/sqlc" ]; then \
 		$(MAKE) tools; \
 	fi
@@ -171,50 +155,59 @@ sqlc-gen: check-env ## Generate SQL code
 		echo "Added generated files to git"; \
 	fi
 
-# section: Docker
+swagger swg: ## Generate Swagger documentation
+	@if [ ! -f "$(TOOLS_DIR)/swag" ]; then \
+		$(MAKE) tools; \
+	fi
+	@echo "Generating Swagger documentation..."
+	@$(TOOLS_DIR)/swag init -g cmd/main.go --parseDependency --parseInternal
+
 # ==============================================================================
 # Docker
 # ==============================================================================
 
-run-docker: ## Start Docker services
+## Docker
+
+run-docker rd: ## Start Docker services
 	@echo "Starting docker services..."
 	@$(DOCKER_COMPOSE) up -d
 
-clean-docker: ## Clean up Docker containers, volumes, and networks
+clean-docker cd: ## Clean up Docker services
 	@echo "Cleaning up Docker services..."
 	@$(DOCKER_COMPOSE) down --volumes --remove-orphans
 
-restart-docker: ## Restart Docker services (stop and start)
+restart-docker rsd: ## Restart Docker services
 	@echo "Restarting Docker services..."
 	@$(DOCKER_COMPOSE) down
 	@$(DOCKER_COMPOSE) up -d
 
-full-reset: ## Full reset: clean Docker, restart services, and apply fresh migrations
+full-reset fr: ## Full reset (Docker + Migrations)
 	$(MAKE) clean-docker
 	$(MAKE) restart-docker
 	@sleep 3
 	$(MAKE) run-migrations
 
-# section: Database Migrations
 # ==============================================================================
 # Database Migrations
 # ==============================================================================
 
-run-migrations: check-env ## Apply database migrations
+## Migrations
+
+run-migrations rm: check-env ## Apply database migrations
 	@if [ ! -f "$(TOOLS_DIR)/goose" ]; then \
 		$(MAKE) tools; \
 	fi
 	@echo "Applying migrations..."
 	@$(TOOLS_DIR)/goose -dir $(MIGRATION_DIR) postgres $(DB_STRING) up
 
-rollback-migrations: check-env ## Rollback last migration
+rollback-migrations rbm: check-env ## Rollback last migration
 	@if [ ! -f "$(TOOLS_DIR)/goose" ]; then \
 		$(MAKE) tools; \
 	fi
 	@echo "Rolling back last migration..."
 	@$(TOOLS_DIR)/goose -dir $(MIGRATION_DIR) postgres $(DB_STRING) down
 
-create-migration: ## Create a new migration (requires name=...)
+create-migration mc: ## Create a new migration (requires name=...)
 	@if [ ! -f "$(TOOLS_DIR)/goose" ]; then \
 		$(MAKE) tools; \
 	fi
@@ -231,69 +224,25 @@ create-migration: ## Create a new migration (requires name=...)
 		echo "Added $$MIGRATION_FILE to git"; \
 	fi
 
-migrate-reset: check-env
+migrate-reset mres: check-env ## Rollback all migrations
 	@if [ ! -f "$(TOOLS_DIR)/goose" ]; then \
 		$(MAKE) tools; \
 	fi
 	@echo "Rolling back all migrations..."
 	@$(TOOLS_DIR)/goose -dir $(MIGRATION_DIR) postgres $(DB_STRING) reset
-	@echo "Migrations reset completed"
 
-migrate-fresh: check-env ## Reset and reapply all migrations
+migrate-fresh mf: check-env ## Reset and reapply all migrations
 	@if [ ! -f "$(TOOLS_DIR)/goose" ]; then \
 		$(MAKE) tools; \
 	fi
 	@echo "Rolling back all migrations..."
 	@$(TOOLS_DIR)/goose -dir $(MIGRATION_DIR) postgres $(DB_STRING) reset
-	@echo "Migrations reset completed"
 	@echo "Applying migrations..."
 	@$(TOOLS_DIR)/goose -dir $(MIGRATION_DIR) postgres $(DB_STRING) up
-	@echo "Migrations applied"
 
-migrate-status: check-env ## Check migration status
+migrate-status ms: check-env ## Check migration status
 	@if [ ! -f "$(TOOLS_DIR)/goose" ]; then \
 		$(MAKE) tools; \
 	fi
 	@echo "Checking migration status..."
 	@$(TOOLS_DIR)/goose -dir $(MIGRATION_DIR) postgres $(DB_STRING) status
-
-# section: Aliases
-# ==============================================================================
-# Aliases
-# ==============================================================================
-
-# Build & Run aliases
-b: build ## Alias for build
-c: clean ## Alias for clean
-rl: run-local ## Alias for run-local
-
-# Code formatting aliases
-f: fmt ## Alias for fmt
-fs: fmt-strict ## Alias for fmt-strict
-fc: fmt-check ## Alias for fmt-check
-
-# Dependencies aliases
-du: deps-update ## Alias for deps-update
-dd: deps-download ## Alias for deps-download
-
-# Tools & Code Generation aliases
-t: tools ## Alias for tools
-ce: check-env ## Alias for check-env
-mk: mocks ## Alias for mocks
-
-# Docker aliases
-rd: run-docker ## Alias for run-docker
-cd: clean-docker ## Alias for clean-docker
-rsd: restart-docker ## Alias for restart-docker
-fr: full-reset ## Alias for full-reset
-
-# Database migration aliases
-mc: create-migration ## Alias for create-migration
-rm: run-migrations ## Alias for run-migrations
-rbm: rollback-migrations ## Alias for rollback-migrations
-mf: migrate-fresh ## Alias for migrate-fresh
-ms: migrate-status ## Alias for migrate-status
-mres: migrate-reset
-
-# SQL aliases
-sqg: sqlc-gen ## Alias for sqlc-gen

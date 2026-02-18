@@ -12,26 +12,14 @@ import (
 )
 
 const deleteChange = `-- name: DeleteChange :exec
-DELETE FROM salary_changes WHERE id = $1
+DELETE
+FROM salary_changes
+WHERE id = $1
 `
 
 func (q *Queries) DeleteChange(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteChange, id)
 	return err
-}
-
-const getChangeByDate = `-- name: GetChangeByDate :one
-SELECT id
-FROM salary_changes
-WHERE change_from = $1
-ORDER BY id
-`
-
-func (q *Queries) GetChangeByDate(ctx context.Context, changeFrom string) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, getChangeByDate, changeFrom)
-	var id pgtype.UUID
-	err := row.Scan(&id)
-	return id, err
 }
 
 const getLatestChangeBeforeDate = `-- name: GetLatestChangeBeforeDate :one
@@ -96,9 +84,9 @@ func (q *Queries) ListChanges(ctx context.Context) ([]SalaryChange, error) {
 }
 
 const updateChange = `-- name: UpdateChange :exec
-UPDATE salary_changes SET
-salary = $2,
-change_from = $3
+UPDATE salary_changes
+SET salary      = $2,
+    change_from = $3
 WHERE id = $1
 `
 

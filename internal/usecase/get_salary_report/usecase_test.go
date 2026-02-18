@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"testing"
+
 	"salary_calculator/internal/dto/get_salary_report"
 	"salary_calculator/internal/generated/dbstore"
 	"salary_calculator/internal/pkg/http/work_calendar"
 	"salary_calculator/internal/services/calculator"
 	"salary_calculator/internal/services/work_days"
 	getsalaryreportuc "salary_calculator/internal/usecase/get_salary_report"
-	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +82,10 @@ func TestUsecase_Do(t *testing.T) {
 			name: "workdays client error",
 			in:   validIn,
 			setup: func(f fields) {
-				f.r.EXPECT().GetLatestChangeBeforeDate(gomock.Any(), gomock.Any()).AnyTimes().Return(dbstore.SalaryChange{Salary: 100000, ChangeFrom: "2025_01"}, nil)
+				f.r.EXPECT().GetLatestChangeBeforeDate(gomock.Any(), gomock.Any()).AnyTimes().Return(dbstore.SalaryChange{
+					Salary:     100000,
+					ChangeFrom: "2025_01",
+				}, nil)
 				f.r.EXPECT().GetBonusByDate(gomock.Any(), gomock.Any()).AnyTimes().Return(dbstore.Bonuse{}, nil)
 				f.workdaysClient.EXPECT().GetWorkdaysForMonth(gomock.Any(), 1, 2025).Return(nil, errors.New("http error"))
 			},

@@ -9,10 +9,16 @@ import (
 )
 
 type Bonuse struct {
-	ID          pgtype.UUID
-	Value       float64
-	Date        string
-	Coefficient float64
+	ID    pgtype.UUID
+	Value float64
+	Date  string
+}
+
+type Duty struct {
+	ID         pgtype.UUID
+	Date       string
+	InWorkdays int32
+	InHolidays int32
 }
 
 type SalaryChange struct {

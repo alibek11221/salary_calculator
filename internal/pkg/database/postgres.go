@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+
 	"salary_calculator/internal/config"
 	"salary_calculator/internal/pkg/logging"
 

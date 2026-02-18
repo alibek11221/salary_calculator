@@ -7,6 +7,7 @@ package get_salary_report_test
 import (
 	context "context"
 	reflect "reflect"
+
 	value_objects "salary_calculator/internal/dto/value_objects"
 	dbstore "salary_calculator/internal/generated/dbstore"
 	work_calendar "salary_calculator/internal/pkg/http/work_calendar"

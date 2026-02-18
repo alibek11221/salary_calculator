@@ -2,15 +2,14 @@ package routes
 
 import (
 	"salary_calculator/internal/app"
-	"salary_calculator/internal/generated/dbstore"
-	"salary_calculator/internal/http/handlers/bonus/add_bonus"
-	"salary_calculator/internal/http/handlers/bonus/delete_bonus"
-	"salary_calculator/internal/http/handlers/bonus/edit_bonus"
-	"salary_calculator/internal/http/handlers/bonus/get_bonuses"
-	addBonusUC "salary_calculator/internal/usecase/add_bonus"
-	deleteBonusUC "salary_calculator/internal/usecase/delete_bonus"
-	editBonusUC "salary_calculator/internal/usecase/edit_bonus"
-	getBonusesUC "salary_calculator/internal/usecase/get_bonuses"
+	"salary_calculator/internal/http/handlers/add_bonus"
+	"salary_calculator/internal/http/handlers/delete_bonus"
+	"salary_calculator/internal/http/handlers/edit_bonus"
+	"salary_calculator/internal/http/handlers/list_bonuses"
+	addBonusUC "salary_calculator/internal/usecase/bonuses/add"
+	deleteBonusUC "salary_calculator/internal/usecase/bonuses/delete"
+	editBonusUC "salary_calculator/internal/usecase/bonuses/edit"
+	getBonusesUC "salary_calculator/internal/usecase/bonuses/list"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -24,12 +23,10 @@ func NewBonusRoutesRegistrar(a *app.App) *BonusRoutesRegistrar {
 }
 
 func (b *BonusRoutesRegistrar) Register(router chi.Router) {
-	repo := dbstore.New(b.app.DB)
-
-	router.Get("/", get_bonuses.New(getBonusesUC.New(repo)).ServeHTTP)
-	router.Post("/", add_bonus.NewHandler(addBonusUC.New(repo)).ServeHTTP)
-	router.Put("/", edit_bonus.NewHandler(editBonusUC.New(repo)).ServeHTTP)
-	router.Delete("/", delete_bonus.NewHandler(deleteBonusUC.New(repo)).ServeHTTP)
+	router.Get("/", list_bonuses.New(getBonusesUC.New(b.app.Repo)).ServeHTTP)
+	router.Post("/", add_bonus.NewHandler(addBonusUC.New(b.app.Repo)).ServeHTTP)
+	router.Put("/", edit_bonus.NewHandler(editBonusUC.New(b.app.Repo)).ServeHTTP)
+	router.Delete("/", delete_bonus.NewHandler(deleteBonusUC.New(b.app.Repo)).ServeHTTP)
 }
 
 func (b *BonusRoutesRegistrar) Name() string {

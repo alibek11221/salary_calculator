@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const StartYear = 2024
@@ -114,4 +115,21 @@ func (s *SalaryDate) Compare(other *SalaryDate) int {
 		return 1
 	}
 	return 0
+}
+
+func (s *SalaryDate) PreviousMonth() *SalaryDate {
+	if s.month == 1 {
+		return From(s.year-1, 12)
+	}
+
+	return From(s.year, s.month-1)
+}
+
+func (s *SalaryDate) CalendarDays() int {
+	if s == nil {
+		return 0
+	}
+
+	t := time.Date(s.year, time.Month(s.month+1), 0, 0, 0, 0, 0, time.UTC)
+	return t.Day()
 }
