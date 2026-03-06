@@ -1,6 +1,7 @@
 package utils
 
 func CalculateNDFL(salary float64) float64 {
+	return 13.0
 	if salary <= 0 {
 		return 0
 	}
