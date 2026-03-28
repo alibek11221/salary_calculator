@@ -1,4 +1,4 @@
-package work_calendar
+package work_calendar_parser
 
 import (
 	"salary_calculator/internal/pkg/types"

@@ -4,14 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"testing"
-
 	"salary_calculator/internal/dto/get_salary_report"
 	"salary_calculator/internal/generated/dbstore"
-	"salary_calculator/internal/pkg/http/work_calendar"
+	"salary_calculator/internal/pkg/http/work_calendar_parser"
 	"salary_calculator/internal/services/calculator"
 	"salary_calculator/internal/services/work_days"
 	getsalaryreportuc "salary_calculator/internal/usecase/get_salary_report"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +46,7 @@ func TestUsecase_Do(t *testing.T) {
 				}, nil)
 				f.r.EXPECT().GetBonusByDate(gomock.Any(), "2025_01").Return(dbstore.Bonuse{}, nil)
 
-				f.workdaysClient.EXPECT().GetWorkdaysForMonth(gomock.Any(), 1, 2025).Return(&work_calendar.WorkdayResponse{}, nil)
+				f.workdaysClient.EXPECT().GetWorkdaysForMonth(gomock.Any(), 1, 2025).Return(&work_calendar_parser.WorkdayResponse{}, nil)
 
 				f.workdaysCalculator.EXPECT().CalculateWorkDaysForMonth(gomock.Any()).Return(&work_days.WorkdaysForMonth{
 					TotalWorkdays: 20,
@@ -96,7 +95,7 @@ func TestUsecase_Do(t *testing.T) {
 			in:   validIn,
 			setup: func(f fields) {
 				f.r.EXPECT().GetLatestChangeBeforeDate(gomock.Any(), gomock.Any()).Return(dbstore.SalaryChange{}, sql.ErrNoRows)
-				f.workdaysClient.EXPECT().GetWorkdaysForMonth(gomock.Any(), 1, 2025).AnyTimes().Return(&work_calendar.WorkdayResponse{}, nil)
+				f.workdaysClient.EXPECT().GetWorkdaysForMonth(gomock.Any(), 1, 2025).AnyTimes().Return(&work_calendar_parser.WorkdayResponse{}, nil)
 				f.r.EXPECT().GetBonusByDate(gomock.Any(), gomock.Any()).AnyTimes().Return(dbstore.Bonuse{}, nil)
 			},
 			wantErr: true,
@@ -109,7 +108,7 @@ func TestUsecase_Do(t *testing.T) {
 			},
 			setup: func(f fields) {
 				f.r.EXPECT().GetLatestChangeBeforeDate(gomock.Any(), "2023_01").Return(dbstore.SalaryChange{}, sql.ErrNoRows)
-				f.workdaysClient.EXPECT().GetWorkdaysForMonth(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&work_calendar.WorkdayResponse{}, nil)
+				f.workdaysClient.EXPECT().GetWorkdaysForMonth(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(&work_calendar_parser.WorkdayResponse{}, nil)
 				f.r.EXPECT().GetBonusByDate(gomock.Any(), gomock.Any()).AnyTimes().Return(dbstore.Bonuse{}, nil)
 			},
 			wantErr: true,

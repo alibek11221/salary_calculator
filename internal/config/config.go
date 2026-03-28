@@ -8,10 +8,8 @@ import (
 )
 
 const (
-	defaultReadTimeout     = 15 * time.Second
-	defaultWriteTimeout    = 15 * time.Second
-	defaultCacheTTL        = time.Hour * 24 * 31
-	defaultWorkdaysTimeout = time.Second * 2
+	defaultReadTimeout  = 15 * time.Second
+	defaultWriteTimeout = 15 * time.Second
 )
 
 var (
@@ -20,18 +18,16 @@ var (
 )
 
 type Config struct {
-	Env                  string
-	WorkCalendarApiToken string
-	Port                 string
-	WorkdaysTimeout      time.Duration
-	Cache                CacheConfig
-	Server               ServerConfig
-	Database             DatabaseConfig
+	Env            string
+	Port           string
+	WorkdaysConfig WorkdaysConfig
+	Server         ServerConfig
+	Database       DatabaseConfig
 }
 
-type CacheConfig struct {
-	Dir string
-	TTL time.Duration
+type WorkdaysConfig struct {
+	Dir      string
+	CacheCap int
 }
 
 type ServerConfig struct {
@@ -62,13 +58,11 @@ func GetConfig() *Config {
 
 func newConfig() *Config {
 	return &Config{
-		Env:                  getEnvWithDefault("ENV", "development"),
-		WorkCalendarApiToken: getEnvWithDefault("API_TOKEN", ""),
-		Port:                 getEnvWithDefault("PORT", "8080"),
-		WorkdaysTimeout:      envToDuration("WORKDAYS_TIMEOUT", defaultWorkdaysTimeout),
-		Cache: CacheConfig{
-			Dir: getEnvWithDefault("CACHE_DIR", "tmp/cache"),
-			TTL: envToDuration("CACHE_TTL", defaultCacheTTL),
+		Env:  getEnvWithDefault("ENV", "development"),
+		Port: getEnvWithDefault("PORT", "8080"),
+		WorkdaysConfig: WorkdaysConfig{
+			Dir:      getEnvWithDefault("WORKDAYS_DIR", "const/workdays"),
+			CacheCap: getEnvAsInt("WORKDAYS_CACHE_CAP", 10),
 		},
 		Server: ServerConfig{
 			ReadTimeout:    envToDuration("SERVER_READ_TIMEOUT", defaultReadTimeout),

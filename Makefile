@@ -19,10 +19,6 @@ DB_STRING="user=$(DB_USERNAME) password=$(DB_PASSWORD) dbname=$(DB_DATABASE) ssl
 # Load environment variables from .env file
 -include .env
 
-# ==============================================================================
-# Help
-# ==============================================================================
-
 .DEFAULT_GOAL := help
 
 help: ## Show this help message
@@ -40,10 +36,6 @@ help: ## Show this help message
 	/^## [a-zA-Z &]+/ { \
 		printf "\n\033[1m%s\033[0m\n", substr($$0, 4); \
 	}' $(MAKEFILE_LIST)
-
-# ==============================================================================
-# Build & Run
-# ==============================================================================
 
 ## Build & Run
 
@@ -63,10 +55,6 @@ clean c: ## Clean build artifacts
 br: build ## Build and run the application
 	@echo "Starting application locally..."
 	@./$(BUILD_DIR)/$(APP_NAME)
-
-# ==============================================================================
-# Code Formatting
-# ==============================================================================
 
 ## Formatting
 
@@ -97,10 +85,6 @@ fmt-check fc: ## Check formatting without changes
 	  echo "Formatting is OK"; \
 	fi
 
-# ==============================================================================
-# Dependencies
-# ==============================================================================
-
 ## Dependencies
 
 deps-update du: ## Update and tidy Go modules
@@ -110,10 +94,6 @@ deps-update du: ## Update and tidy Go modules
 
 deps-download dd: ## Download Go modules
 	@go mod download
-
-# ==============================================================================
-# Tools & Code Generation
-# ==============================================================================
 
 ## Tools & Generation
 
@@ -162,10 +142,6 @@ swagger swg: ## Generate Swagger documentation
 	@echo "Generating Swagger documentation..."
 	@$(TOOLS_DIR)/swag init -g cmd/main.go --parseDependency --parseInternal
 
-# ==============================================================================
-# Docker
-# ==============================================================================
-
 ## Docker
 
 run-docker rd: ## Start Docker services
@@ -186,10 +162,6 @@ full-reset fr: ## Full reset (Docker + Migrations)
 	$(MAKE) restart-docker
 	@sleep 3
 	$(MAKE) run-migrations
-
-# ==============================================================================
-# Database Migrations
-# ==============================================================================
 
 ## Migrations
 

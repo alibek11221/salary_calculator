@@ -1,11 +1,10 @@
 package work_days
 
 import (
+	"salary_calculator/internal/pkg/http/work_calendar_parser"
+	"salary_calculator/internal/pkg/types"
 	"testing"
 	"time"
-
-	"salary_calculator/internal/pkg/http/work_calendar"
-	"salary_calculator/internal/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,15 +14,15 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		month work_calendar.WorkdayResponse
+		month work_calendar_parser.WorkdayResponse
 		want  *WorkdaysForMonth
 		isNil bool
 	}{
 		{
 			name: "Regular month",
-			month: work_calendar.WorkdayResponse{
-				Statistics: work_calendar.Statistics{WorkDays: 20},
-				Days: []work_calendar.Day{
+			month: work_calendar_parser.WorkdayResponse{
+				Statistics: work_calendar_parser.Statistics{WorkDays: 20},
+				Days: []work_calendar_parser.Day{
 					{Date: types.Date{Time: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)}, TypeId: 1},
 					{Date: types.Date{Time: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC)}, TypeId: 1},
 					{Date: types.Date{Time: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC)}, TypeId: 1},
@@ -41,9 +40,9 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 		},
 		{
 			name: "Short day is work day",
-			month: work_calendar.WorkdayResponse{
-				Statistics: work_calendar.Statistics{WorkDays: 20},
-				Days: []work_calendar.Day{
+			month: work_calendar_parser.WorkdayResponse{
+				Statistics: work_calendar_parser.Statistics{WorkDays: 20},
+				Days: []work_calendar_parser.Day{
 					{Date: types.Date{Time: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)}, TypeId: 5},
 					{Date: types.Date{Time: time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC)}, TypeId: 5},
 				},
@@ -56,7 +55,7 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 		},
 		{
 			name:  "Nil response",
-			month: work_calendar.WorkdayResponse{},
+			month: work_calendar_parser.WorkdayResponse{},
 			want:  nil,
 			isNil: true,
 		},
@@ -64,7 +63,7 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var arg *work_calendar.WorkdayResponse
+			var arg *work_calendar_parser.WorkdayResponse
 			if !tt.isNil {
 				arg = &tt.month
 			}
@@ -77,10 +76,10 @@ func TestService_CalculateWorkDaysForMonth(t *testing.T) {
 func TestService_CalculateWorkDays(t *testing.T) {
 	service := New()
 
-	months := map[int]*work_calendar.WorkdayResponse{
+	months := map[int]*work_calendar_parser.WorkdayResponse{
 		1: {
-			Statistics: work_calendar.Statistics{WorkDays: 20},
-			Days: []work_calendar.Day{
+			Statistics: work_calendar_parser.Statistics{WorkDays: 20},
+			Days: []work_calendar_parser.Day{
 				{Date: types.Date{Time: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)}, TypeId: 1},
 			},
 		},

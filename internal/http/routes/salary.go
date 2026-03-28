@@ -1,17 +1,13 @@
 package routes
 
 import (
-	"net/http"
-	"time"
-
 	"salary_calculator/internal/app"
 	"salary_calculator/internal/http/handlers/add_s_change"
 	"salary_calculator/internal/http/handlers/delete_s_change"
 	"salary_calculator/internal/http/handlers/edit_s_change"
 	"salary_calculator/internal/http/handlers/get_salary_report"
 	"salary_calculator/internal/http/handlers/list_s_changes"
-	"salary_calculator/internal/pkg/cache/file"
-	"salary_calculator/internal/pkg/http/work_calendar"
+	"salary_calculator/internal/pkg/http/work_calendar_parser"
 	"salary_calculator/internal/services/calculator"
 	"salary_calculator/internal/services/work_days"
 	getSalaryReportUC "salary_calculator/internal/usecase/get_salary_report"
@@ -32,10 +28,7 @@ func NewSalaryRoutesRegistrar(a *app.App) *SalaryRoutesRegistrar {
 }
 
 func (s *SalaryRoutesRegistrar) Register(router chi.Router) {
-	httpClient := &http.Client{Timeout: 10 * time.Second}
-	cache := file.New[string, work_calendar.WorkdayResponse](s.app.Config.Cache.Dir, s.app.Config.Cache.TTL, s.app.Logger)
-
-	workDaysClient := work_calendar.New(httpClient, cache, s.app.Config.WorkCalendarApiToken, s.app.Logger)
+	workDaysClient := work_calendar_parser.New(s.app.Config.WorkdaysConfig.Dir, s.app.Config.WorkdaysConfig.CacheCap, s.app.Logger)
 	workDaysCalc := work_days.New()
 	salaryCalc := calculator.New(s.app.Repo)
 
