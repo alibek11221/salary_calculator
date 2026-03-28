@@ -1,0 +1,27 @@
+{
+  "1": {
+    "statistic": {
+      "work_days": 20,
+      "calendar_days": 31,
+      "working_hours": 160,
+      "shortened_working_days": 1
+    },
+    "days": [
+      {
+        "date": "01.01.2025",
+        "type_id": 1,
+        "type_text": "Holiday",
+        "week_day": "Wednesday"
+      }
+    ]
+  },
+  "2": {
+    "statistic": {
+      "work_days": 19,
+      "calendar_days": 28,
+      "working_hours": 152,
+      "shortened_working_days": 0
+    },
+    "days": []
+  }
+}

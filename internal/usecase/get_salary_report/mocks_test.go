@@ -7,10 +7,9 @@ package get_salary_report_test
 import (
 	context "context"
 	reflect "reflect"
-
 	value_objects "salary_calculator/internal/dto/value_objects"
 	dbstore "salary_calculator/internal/generated/dbstore"
-	work_calendar "salary_calculator/internal/pkg/http/work_calendar"
+	work_calendar "salary_calculator/internal/pkg/http/work_calendar_parser"
 	calculator "salary_calculator/internal/services/calculator"
 	work_days "salary_calculator/internal/services/work_days"
 
@@ -107,7 +106,7 @@ func (mr *MocksalaryCalculatorMockRecorder) CalculateSalary(sCtx, extraPayments 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateSalary", reflect.TypeOf((*MocksalaryCalculator)(nil).CalculateSalary), sCtx, extraPayments)
 }
 
-// MockworkdaysClient is a mock of workdaysClient interface.
+// MockworkdaysClient is a mock of workdaysParser interface.
 type MockworkdaysClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockworkdaysClientMockRecorder

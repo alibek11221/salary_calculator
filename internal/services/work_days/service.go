@@ -1,7 +1,7 @@
 package work_days
 
 import (
-	"salary_calculator/internal/pkg/http/work_calendar"
+	"salary_calculator/internal/pkg/http/work_calendar_parser"
 )
 
 type Service struct{}
@@ -16,7 +16,7 @@ type WorkdaysForMonth struct {
 	SecondHalfDays int `json:"second_half_days"`
 }
 
-func (s *Service) CalculateWorkDays(months map[int]*work_calendar.WorkdayResponse) map[int]*WorkdaysForMonth {
+func (s *Service) CalculateWorkDays(months map[int]*work_calendar_parser.WorkdayResponse) map[int]*WorkdaysForMonth {
 	out := make(map[int]*WorkdaysForMonth, len(months))
 
 	for k, v := range months {
@@ -31,7 +31,7 @@ func (s *Service) CalculateWorkDays(months map[int]*work_calendar.WorkdayRespons
 	return out
 }
 
-func (s *Service) CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) *WorkdaysForMonth {
+func (s *Service) CalculateWorkDaysForMonth(month *work_calendar_parser.WorkdayResponse) *WorkdaysForMonth {
 	if month == nil {
 		return nil
 	}

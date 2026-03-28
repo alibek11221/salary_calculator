@@ -5,11 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-
 	"salary_calculator/internal/dto/get_salary_report"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
-	wc "salary_calculator/internal/pkg/http/work_calendar"
+	wc "salary_calculator/internal/pkg/http/work_calendar_parser"
 	"salary_calculator/internal/pkg/utils"
 
 	eg "golang.org/x/sync/errgroup"
@@ -17,21 +16,21 @@ import (
 
 type usecase struct {
 	r                  repo
-	workdaysClient     workdaysClient
+	workdaysParser     workdaysParser
 	workdaysCalculator workdaysCalculator
 	salaryCalculator   salaryCalculator
 }
 
 func New(
 	r repo,
-	workdaysClient workdaysClient,
+	workdaysParser workdaysParser,
 	workdaysCalculator workdaysCalculator,
 	salaryCalculator salaryCalculator,
 ) *usecase {
 	return &usecase{
 		r:                  r,
 		salaryCalculator:   salaryCalculator,
-		workdaysClient:     workdaysClient,
+		workdaysParser:     workdaysParser,
 		workdaysCalculator: workdaysCalculator,
 	}
 }
@@ -61,7 +60,7 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 
 	g.Go(func() error {
 		var err error
-		wdr, err = u.workdaysClient.GetWorkdaysForMonth(gCtx, in.Month, in.Year)
+		wdr, err = u.workdaysParser.Parse(in.Year, in.Month)
 
 		return err
 	})
