@@ -2,10 +2,13 @@ package get_salary_report
 
 import (
 	"context"
+	"time"
+
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
 	"salary_calculator/internal/pkg/http/work_calendar_parser"
 	"salary_calculator/internal/services/calculator"
+	"salary_calculator/internal/services/vacation_pay"
 	"salary_calculator/internal/services/work_days"
 )
 
@@ -13,6 +16,7 @@ import (
 
 type repo interface {
 	GetLatestChangeBeforeDate(ctx context.Context, changeFrom string) (dbstore.SalaryChange, error)
+	GetVacationsInRange(ctx context.Context, arg dbstore.GetVacationsInRangeParams) ([]dbstore.Vacation, error)
 }
 
 type salaryCalculator interface {
@@ -29,4 +33,8 @@ type workdaysParser interface {
 
 type workdaysCalculator interface {
 	CalculateWorkDaysForMonth(month *work_calendar_parser.WorkdayResponse) *work_days.WorkdaysForMonth
+}
+
+type vacationPay interface {
+	CalculatePay(ctx context.Context, from, to time.Time) (*vacation_pay.Pay, error)
 }

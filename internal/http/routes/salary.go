@@ -9,6 +9,7 @@ import (
 	"salary_calculator/internal/http/handlers/list_s_changes"
 	"salary_calculator/internal/pkg/http/work_calendar_parser"
 	"salary_calculator/internal/services/calculator"
+	"salary_calculator/internal/services/vacation_pay"
 	"salary_calculator/internal/services/work_days"
 	getSalaryReportUC "salary_calculator/internal/usecase/get_salary_report"
 	addSalaryChangeUC "salary_calculator/internal/usecase/salary_change/add"
@@ -31,9 +32,10 @@ func (s *SalaryRoutesRegistrar) Register(router chi.Router) {
 	workDaysClient := work_calendar_parser.New(s.app.Config.WorkdaysConfig.Dir, s.app.Config.WorkdaysConfig.CacheCap, s.app.Logger)
 	workDaysCalc := work_days.New()
 	salaryCalc := calculator.New(s.app.Repo)
+	vacationPaySvc := vacation_pay.New(s.app.Repo, workDaysClient)
 
 	router.Get("/report", get_salary_report.New(
-		getSalaryReportUC.New(s.app.Repo, workDaysClient, workDaysCalc, salaryCalc),
+		getSalaryReportUC.New(s.app.Repo, workDaysClient, workDaysCalc, salaryCalc, vacationPaySvc),
 	).ServeHTTP)
 
 	router.Route("/changes", func(r chi.Router) {

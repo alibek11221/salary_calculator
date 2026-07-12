@@ -7,10 +7,13 @@ package get_salary_report_test
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
+
 	value_objects "salary_calculator/internal/dto/value_objects"
 	dbstore "salary_calculator/internal/generated/dbstore"
-	work_calendar "salary_calculator/internal/pkg/http/work_calendar_parser"
+	work_calendar_parser "salary_calculator/internal/pkg/http/work_calendar_parser"
 	calculator "salary_calculator/internal/services/calculator"
+	vacation_pay "salary_calculator/internal/services/vacation_pay"
 	work_days "salary_calculator/internal/services/work_days"
 
 	gomock "github.com/golang/mock/gomock"
@@ -39,21 +42,6 @@ func (m *Mockrepo) EXPECT() *MockrepoMockRecorder {
 	return m.recorder
 }
 
-// GetBonusByDate mocks base method.
-func (m *Mockrepo) GetBonusByDate(ctx context.Context, date string) (dbstore.Bonuse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBonusByDate", ctx, date)
-	ret0, _ := ret[0].(dbstore.Bonuse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBonusByDate indicates an expected call of GetBonusByDate.
-func (mr *MockrepoMockRecorder) GetBonusByDate(ctx, date interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBonusByDate", reflect.TypeOf((*Mockrepo)(nil).GetBonusByDate), ctx, date)
-}
-
 // GetLatestChangeBeforeDate mocks base method.
 func (m *Mockrepo) GetLatestChangeBeforeDate(ctx context.Context, changeFrom string) (dbstore.SalaryChange, error) {
 	m.ctrl.T.Helper()
@@ -67,6 +55,21 @@ func (m *Mockrepo) GetLatestChangeBeforeDate(ctx context.Context, changeFrom str
 func (mr *MockrepoMockRecorder) GetLatestChangeBeforeDate(ctx, changeFrom interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestChangeBeforeDate", reflect.TypeOf((*Mockrepo)(nil).GetLatestChangeBeforeDate), ctx, changeFrom)
+}
+
+// GetVacationsInRange mocks base method.
+func (m *Mockrepo) GetVacationsInRange(ctx context.Context, arg dbstore.GetVacationsInRangeParams) ([]dbstore.Vacation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVacationsInRange", ctx, arg)
+	ret0, _ := ret[0].([]dbstore.Vacation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVacationsInRange indicates an expected call of GetVacationsInRange.
+func (mr *MockrepoMockRecorder) GetVacationsInRange(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVacationsInRange", reflect.TypeOf((*Mockrepo)(nil).GetVacationsInRange), ctx, arg)
 }
 
 // MocksalaryCalculator is a mock of salaryCalculator interface.
@@ -93,55 +96,56 @@ func (m *MocksalaryCalculator) EXPECT() *MocksalaryCalculatorMockRecorder {
 }
 
 // CalculateSalary mocks base method.
-func (m *MocksalaryCalculator) CalculateSalary(sCtx value_objects.SalaryCalculationContext, extraPayments value_objects.ExtraPaymentsCollection) calculator.SalaryCalculationResult {
+func (m *MocksalaryCalculator) CalculateSalary(ctx context.Context, date value_objects.SalaryDate, sCtx value_objects.SalaryCalculationContext) (*calculator.SalaryCalculationResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CalculateSalary", sCtx, extraPayments)
-	ret0, _ := ret[0].(calculator.SalaryCalculationResult)
-	return ret0
-}
-
-// CalculateSalary indicates an expected call of CalculateSalary.
-func (mr *MocksalaryCalculatorMockRecorder) CalculateSalary(sCtx, extraPayments interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateSalary", reflect.TypeOf((*MocksalaryCalculator)(nil).CalculateSalary), sCtx, extraPayments)
-}
-
-// MockworkdaysClient is a mock of workdaysParser interface.
-type MockworkdaysClient struct {
-	ctrl     *gomock.Controller
-	recorder *MockworkdaysClientMockRecorder
-}
-
-// MockworkdaysClientMockRecorder is the mock recorder for MockworkdaysClient.
-type MockworkdaysClientMockRecorder struct {
-	mock *MockworkdaysClient
-}
-
-// NewMockworkdaysClient creates a new mock instance.
-func NewMockworkdaysClient(ctrl *gomock.Controller) *MockworkdaysClient {
-	mock := &MockworkdaysClient{ctrl: ctrl}
-	mock.recorder = &MockworkdaysClientMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockworkdaysClient) EXPECT() *MockworkdaysClientMockRecorder {
-	return m.recorder
-}
-
-// GetWorkdaysForMonth mocks base method.
-func (m *MockworkdaysClient) GetWorkdaysForMonth(ctx context.Context, month, year int) (*work_calendar.WorkdayResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWorkdaysForMonth", ctx, month, year)
-	ret0, _ := ret[0].(*work_calendar.WorkdayResponse)
+	ret := m.ctrl.Call(m, "CalculateSalary", ctx, date, sCtx)
+	ret0, _ := ret[0].(*calculator.SalaryCalculationResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetWorkdaysForMonth indicates an expected call of GetWorkdaysForMonth.
-func (mr *MockworkdaysClientMockRecorder) GetWorkdaysForMonth(ctx, month, year interface{}) *gomock.Call {
+// CalculateSalary indicates an expected call of CalculateSalary.
+func (mr *MocksalaryCalculatorMockRecorder) CalculateSalary(ctx, date, sCtx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkdaysForMonth", reflect.TypeOf((*MockworkdaysClient)(nil).GetWorkdaysForMonth), ctx, month, year)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateSalary", reflect.TypeOf((*MocksalaryCalculator)(nil).CalculateSalary), ctx, date, sCtx)
+}
+
+// MockworkdaysParser is a mock of workdaysParser interface.
+type MockworkdaysParser struct {
+	ctrl     *gomock.Controller
+	recorder *MockworkdaysParserMockRecorder
+}
+
+// MockworkdaysParserMockRecorder is the mock recorder for MockworkdaysParser.
+type MockworkdaysParserMockRecorder struct {
+	mock *MockworkdaysParser
+}
+
+// NewMockworkdaysParser creates a new mock instance.
+func NewMockworkdaysParser(ctrl *gomock.Controller) *MockworkdaysParser {
+	mock := &MockworkdaysParser{ctrl: ctrl}
+	mock.recorder = &MockworkdaysParserMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockworkdaysParser) EXPECT() *MockworkdaysParserMockRecorder {
+	return m.recorder
+}
+
+// Parse mocks base method.
+func (m *MockworkdaysParser) Parse(year, month int) (*work_calendar_parser.WorkdayResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Parse", year, month)
+	ret0, _ := ret[0].(*work_calendar_parser.WorkdayResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Parse indicates an expected call of Parse.
+func (mr *MockworkdaysParserMockRecorder) Parse(year, month interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Parse", reflect.TypeOf((*MockworkdaysParser)(nil).Parse), year, month)
 }
 
 // MockworkdaysCalculator is a mock of workdaysCalculator interface.
@@ -168,7 +172,7 @@ func (m *MockworkdaysCalculator) EXPECT() *MockworkdaysCalculatorMockRecorder {
 }
 
 // CalculateWorkDaysForMonth mocks base method.
-func (m *MockworkdaysCalculator) CalculateWorkDaysForMonth(month *work_calendar.WorkdayResponse) *work_days.WorkdaysForMonth {
+func (m *MockworkdaysCalculator) CalculateWorkDaysForMonth(month *work_calendar_parser.WorkdayResponse) *work_days.WorkdaysForMonth {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CalculateWorkDaysForMonth", month)
 	ret0, _ := ret[0].(*work_days.WorkdaysForMonth)
@@ -179,4 +183,42 @@ func (m *MockworkdaysCalculator) CalculateWorkDaysForMonth(month *work_calendar.
 func (mr *MockworkdaysCalculatorMockRecorder) CalculateWorkDaysForMonth(month interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateWorkDaysForMonth", reflect.TypeOf((*MockworkdaysCalculator)(nil).CalculateWorkDaysForMonth), month)
+}
+
+// MockvacationPay is a mock of vacationPay interface.
+type MockvacationPay struct {
+	ctrl     *gomock.Controller
+	recorder *MockvacationPayMockRecorder
+}
+
+// MockvacationPayMockRecorder is the mock recorder for MockvacationPay.
+type MockvacationPayMockRecorder struct {
+	mock *MockvacationPay
+}
+
+// NewMockvacationPay creates a new mock instance.
+func NewMockvacationPay(ctrl *gomock.Controller) *MockvacationPay {
+	mock := &MockvacationPay{ctrl: ctrl}
+	mock.recorder = &MockvacationPayMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockvacationPay) EXPECT() *MockvacationPayMockRecorder {
+	return m.recorder
+}
+
+// CalculatePay mocks base method.
+func (m *MockvacationPay) CalculatePay(ctx context.Context, from, to time.Time) (*vacation_pay.Pay, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CalculatePay", ctx, from, to)
+	ret0, _ := ret[0].(*vacation_pay.Pay)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CalculatePay indicates an expected call of CalculatePay.
+func (mr *MockvacationPayMockRecorder) CalculatePay(ctx, from, to interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculatePay", reflect.TypeOf((*MockvacationPay)(nil).CalculatePay), ctx, from, to)
 }
