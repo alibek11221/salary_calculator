@@ -20,8 +20,7 @@ type ExtraPaymentsCollection struct {
 }
 
 func NewExtraPaymentsCollection(payments ...ExtraPayment) *ExtraPaymentsCollection {
-	totals := make(map[ExtraPaymentType]float64, 3)
-	totals = map[ExtraPaymentType]float64{
+	totals := map[ExtraPaymentType]float64{
 		Advance: 0,
 		Salary:  0,
 		Extra:   0,

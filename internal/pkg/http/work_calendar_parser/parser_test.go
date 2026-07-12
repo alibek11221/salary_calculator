@@ -99,18 +99,21 @@ func TestParser_Parse(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("cache_isolation", func(t *testing.T) {
+	t.Run("distinct_response_shared_days", func(t *testing.T) {
+		// Контракт Parse: сама структура — копия (мутация полей верхнего
+		// уровня кэш не трогает), но слайс Days шарится с кэшем и read-only.
 		res1, err := p.Parse(2025, 1)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, res1.Days)
 
-		// Modify an EXISTING element of the slice
-		res1.Days[0].TypeText = "Modified"
+		res1.Statistics.WorkDays = -1
+		res1.Days = nil
 
 		res2, err := p.Parse(2025, 1)
 		assert.NoError(t, err)
-		assert.NotEmpty(t, res2.Days)
-		assert.NotEqual(t, "Modified", res2.Days[0].TypeText, "Cache element was modified!")
+		assert.NotSame(t, res1, res2)
+		assert.NotEqual(t, -1, res2.Statistics.WorkDays, "cache statistics was modified")
+		assert.NotEmpty(t, res2.Days, "cache days slice header was modified")
 	})
 
 	t.Run("eviction", func(t *testing.T) {

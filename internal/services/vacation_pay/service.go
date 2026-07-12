@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"salary_calculator/internal/dto/value_objects"
@@ -64,23 +65,41 @@ type Pay struct {
 	Gross    float64
 }
 
-// AverageDailyEarnings — средний дневной заработок за 12 календарных месяцев
-// до месяца начала отпуска: (оклад + премии) по месяцам / N / 29.3.
-// Месяцы без данных об окладе выпадают и из суммы, и из делителя.
-func (s *Service) AverageDailyEarnings(ctx context.Context, vacationStart time.Time) (float64, error) {
+// EarningsData — все данные из БД, нужные для расчёта среднего заработка.
+// Загружается один раз (LoadEarningsData) и переиспользуется между расчётами.
+type EarningsData struct {
+	Changes []dbstore.SalaryChange
+	Bonuses []dbstore.Bonuse
+}
+
+// LoadEarningsData — единственное место, где для расчёта среднего заработка
+// читаются изменения оклада и премии.
+func (s *Service) LoadEarningsData(ctx context.Context) (*EarningsData, error) {
 	changes, err := s.r.ListChanges(ctx)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	bonuses, err := s.r.ListBonuses(ctx)
 	if err != nil {
-		return 0, err
+		return nil, err
+	}
+	return &EarningsData{Changes: changes, Bonuses: bonuses}, nil
+}
+
+// AverageDailyEarnings — средний дневной заработок за 12 календарных месяцев
+// до месяца начала отпуска: (оклад + премии) по месяцам / N / 29.3.
+// Месяцы без данных об окладе выпадают и из суммы, и из делителя.
+func (s *Service) AverageDailyEarnings(data *EarningsData, vacationStart time.Time) (float64, error) {
+	if data == nil {
+		return 0, ErrNoEarningsData
 	}
 
-	bonusByMonth := make(map[string]float64, len(bonuses))
-	for _, b := range bonuses {
+	bonusByMonth := make(map[string]float64, len(data.Bonuses))
+	for _, b := range data.Bonuses {
 		bonusByMonth[b.Date] += b.Value
 	}
+
+	timeline := newSalaryTimeline(data.Changes)
 
 	var (
 		total          float64
@@ -88,15 +107,16 @@ func (s *Service) AverageDailyEarnings(ctx context.Context, vacationStart time.T
 	)
 
 	month := value_objects.From(vacationStart.Year(), int(vacationStart.Month()))
-	for i := 0; i < monthsInAvgPeriod; i++ {
+	for range monthsInAvgPeriod {
 		month = month.PreviousMonth()
+		key := month.String()
 
-		salary, ok := salaryForMonth(changes, month.String())
+		salary, ok := timeline.salaryFor(key)
 		if !ok {
 			continue
 		}
 
-		total += salary + bonusByMonth[month.String()]
+		total += salary + bonusByMonth[key]
 		monthsWithData++
 	}
 
@@ -107,9 +127,9 @@ func (s *Service) AverageDailyEarnings(ctx context.Context, vacationStart time.T
 	return total / float64(monthsWithData) / AvgCalendarDaysPerMonth, nil
 }
 
-// CalculatePay — отпускные (gross) за период.
-func (s *Service) CalculatePay(ctx context.Context, from, to time.Time) (*Pay, error) {
-	avg, err := s.AverageDailyEarnings(ctx, from)
+// CalculatePayWith — отпускные (gross) за период по уже загруженным данным.
+func (s *Service) CalculatePayWith(data *EarningsData, from, to time.Time) (*Pay, error) {
+	avg, err := s.AverageDailyEarnings(data, from)
 	if err != nil {
 		return nil, err
 	}
@@ -126,23 +146,49 @@ func (s *Service) CalculatePay(ctx context.Context, from, to time.Time) (*Pay, e
 	}, nil
 }
 
-// salaryForMonth — оклад, действующий в месяце "YYYY_MM": последний change_from <= месяца.
-// Ключи zero-padded, поэтому лексикографическое сравнение совпадает с хронологией.
-func salaryForMonth(changes []dbstore.SalaryChange, month string) (float64, bool) {
-	var (
-		best  string
-		value float64
-		found bool
-	)
+// CalculatePay — отпускные (gross) за период: LoadEarningsData + CalculatePayWith.
+func (s *Service) CalculatePay(ctx context.Context, from, to time.Time) (*Pay, error) {
+	data, err := s.LoadEarningsData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.CalculatePayWith(data, from, to)
+}
+
+// salaryTimeline — оклады, отсортированные по месяцу вступления в силу,
+// для поиска «последний change_from <= месяца» за O(log n).
+// При дубликатах change_from сохраняется первое вхождение (как в исходном
+// линейном сканировании).
+type salaryTimeline struct {
+	keys     []string // отсортированные уникальные change_from ("YYYY_MM")
+	salaries map[string]float64
+}
+
+func newSalaryTimeline(changes []dbstore.SalaryChange) salaryTimeline {
+	salaries := make(map[string]float64, len(changes))
+	keys := make([]string, 0, len(changes))
 	for _, c := range changes {
-		if c.ChangeFrom > month {
+		if _, ok := salaries[c.ChangeFrom]; ok {
 			continue
 		}
-		if !found || c.ChangeFrom > best {
-			best, value, found = c.ChangeFrom, c.Salary, true
-		}
+		salaries[c.ChangeFrom] = c.Salary
+		keys = append(keys, c.ChangeFrom)
 	}
-	return value, found
+	slices.Sort(keys)
+	return salaryTimeline{keys: keys, salaries: salaries}
+}
+
+// salaryFor — оклад, действующий в месяце "YYYY_MM": последний change_from <= месяца.
+// Ключи zero-padded, поэтому лексикографическое сравнение совпадает с хронологией.
+func (t salaryTimeline) salaryFor(month string) (float64, bool) {
+	i, found := slices.BinarySearch(t.keys, month)
+	if found {
+		return t.salaries[month], true
+	}
+	if i == 0 {
+		return 0, false
+	}
+	return t.salaries[t.keys[i-1]], true
 }
 
 // PaidDays — оплачиваемые дни отпуска: календарные дни периода минус
@@ -152,22 +198,54 @@ func (s *Service) PaidDays(from, to time.Time) (int, error) {
 		return 0, ErrInvalidPeriod
 	}
 
-	paid := 0
+	start := truncateToDay(from)
 	end := truncateToDay(to)
-	for d := truncateToDay(from); !d.After(end); d = d.AddDate(0, 0, 1) {
-		cal, err := s.parser.Parse(d.Year(), int(d.Month()))
+
+	paid := 0
+	for monthStart := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, time.UTC); !monthStart.After(end); monthStart = monthStart.AddDate(0, 1, 0) {
+		cal, err := s.parser.Parse(monthStart.Year(), int(monthStart.Month()))
 		if err != nil {
 			return 0, err
 		}
-		typeID, ok := dayTypeFor(cal, d)
-		if !ok {
-			return 0, fmt.Errorf("day %s not found in work calendar", d.Format("2006-01-02"))
+
+		typeByDay := dayTypesFor(cal, monthStart.Year(), monthStart.Month())
+
+		first := monthStart
+		if first.Before(start) {
+			first = start
 		}
-		if typeID != dayTypeHoliday {
-			paid++
+		last := monthStart.AddDate(0, 1, -1)
+		if last.After(end) {
+			last = end
+		}
+
+		for d := first.Day(); d <= last.Day(); d++ {
+			typeID, ok := typeByDay[d]
+			if !ok {
+				missing := time.Date(monthStart.Year(), monthStart.Month(), d, 0, 0, 0, 0, time.UTC)
+				return 0, fmt.Errorf("day %s not found in work calendar", missing.Format("2006-01-02"))
+			}
+			if typeID != dayTypeHoliday {
+				paid++
+			}
 		}
 	}
 	return paid, nil
+}
+
+// dayTypesFor — map[день месяца]typeID из месячного календаря;
+// дни других месяцев/лет игнорируются.
+func dayTypesFor(cal *work_calendar_parser.WorkdayResponse, year int, month time.Month) map[int]int {
+	if cal == nil {
+		return nil
+	}
+	types := make(map[int]int, len(cal.Days))
+	for _, day := range cal.Days {
+		if day.Date.Year() == year && day.Date.Month() == month {
+			types[day.Date.Day()] = day.TypeId
+		}
+	}
+	return types
 }
 
 // WorkdayDeduction считает, сколько рабочих дней (тип 1 и 5) из переданного
@@ -202,16 +280,4 @@ func coveredByAny(d time.Time, vacations []dbstore.Vacation) bool {
 
 func truncateToDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-}
-
-func dayTypeFor(cal *work_calendar_parser.WorkdayResponse, d time.Time) (int, bool) {
-	if cal == nil {
-		return 0, false
-	}
-	for _, day := range cal.Days {
-		if day.Date.Year() == d.Year() && day.Date.Month() == d.Month() && day.Date.Day() == d.Day() {
-			return day.TypeId, true
-		}
-	}
-	return 0, false
 }

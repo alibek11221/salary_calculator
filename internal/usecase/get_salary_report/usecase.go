@@ -100,7 +100,9 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 		return nil, fmt.Errorf("could not calculate workdays")
 	}
 
-	vacations := append(append([]dbstore.Vacation{}, dbVacations...), in.ExtraVacations...)
+	vacations := make([]dbstore.Vacation, 0, len(dbVacations)+len(in.ExtraVacations))
+	vacations = append(vacations, dbVacations...)
+	vacations = append(vacations, in.ExtraVacations...)
 
 	ded := vacation_pay.WorkdayDeduction(wdr.Days, vacations)
 	wDays.FirstHalfDays -= ded.FirstHalf
@@ -108,7 +110,7 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 
 	ndfl := utils.CalculateNDFL(latestSalary.Salary)
 
-	vacationPayments, err := u.vacationPayments(ctx, vacations, in.Year, in.Month, ndfl)
+	vacationPayments, err := u.vacationPayments(ctx, vacations, in.Year, in.Month, ndfl, in.Earnings)
 	if err != nil {
 		return nil, err
 	}
@@ -130,13 +132,16 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 // vacationPayments — net-суммы отпускных для отпусков, начинающихся в отчётном
 // месяце. Отпуск, начавшийся в прошлом месяце и заехавший в отчётный, здесь
 // пропускается: его выплата целиком показана в месяце начала.
+// Данные для среднего заработка (earnings) загружаются лениво и максимум один
+// раз на запрос; переданные снаружи (estimate) переиспользуются как есть.
 func (u *usecase) vacationPayments(
 	ctx context.Context,
 	vacations []dbstore.Vacation,
 	year, month int,
 	ndfl float64,
+	earnings *vacation_pay.EarningsData,
 ) ([]value_objects.ExtraPayment, error) {
-	var payments []value_objects.ExtraPayment
+	payments := make([]value_objects.ExtraPayment, 0, len(vacations))
 
 	for _, v := range vacations {
 		start := v.DateFrom.Time
@@ -144,7 +149,15 @@ func (u *usecase) vacationPayments(
 			continue
 		}
 
-		pay, err := u.vacationPay.CalculatePay(ctx, v.DateFrom.Time, v.DateTo.Time)
+		if earnings == nil {
+			var err error
+			earnings, err = u.vacationPay.LoadEarningsData(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		pay, err := u.vacationPay.CalculatePayWith(earnings, v.DateFrom.Time, v.DateTo.Time)
 		if err != nil {
 			return nil, err
 		}

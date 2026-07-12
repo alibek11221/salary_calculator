@@ -208,17 +208,32 @@ func (m *MockvacationPay) EXPECT() *MockvacationPayMockRecorder {
 	return m.recorder
 }
 
-// CalculatePay mocks base method.
-func (m *MockvacationPay) CalculatePay(ctx context.Context, from, to time.Time) (*vacation_pay.Pay, error) {
+// CalculatePayWith mocks base method.
+func (m *MockvacationPay) CalculatePayWith(data *vacation_pay.EarningsData, from, to time.Time) (*vacation_pay.Pay, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CalculatePay", ctx, from, to)
+	ret := m.ctrl.Call(m, "CalculatePayWith", data, from, to)
 	ret0, _ := ret[0].(*vacation_pay.Pay)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CalculatePay indicates an expected call of CalculatePay.
-func (mr *MockvacationPayMockRecorder) CalculatePay(ctx, from, to interface{}) *gomock.Call {
+// CalculatePayWith indicates an expected call of CalculatePayWith.
+func (mr *MockvacationPayMockRecorder) CalculatePayWith(data, from, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculatePay", reflect.TypeOf((*MockvacationPay)(nil).CalculatePay), ctx, from, to)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculatePayWith", reflect.TypeOf((*MockvacationPay)(nil).CalculatePayWith), data, from, to)
+}
+
+// LoadEarningsData mocks base method.
+func (m *MockvacationPay) LoadEarningsData(ctx context.Context) (*vacation_pay.EarningsData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadEarningsData", ctx)
+	ret0, _ := ret[0].(*vacation_pay.EarningsData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadEarningsData indicates an expected call of LoadEarningsData.
+func (mr *MockvacationPayMockRecorder) LoadEarningsData(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadEarningsData", reflect.TypeOf((*MockvacationPay)(nil).LoadEarningsData), ctx)
 }

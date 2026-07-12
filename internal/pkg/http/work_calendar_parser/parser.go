@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
+	"strconv"
 
 	"salary_calculator/internal/pkg/logging"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"golang.org/x/sync/singleflight"
 )
 
 var (
@@ -24,6 +25,7 @@ type Parser struct {
 	cacheCap int
 
 	cache *lru.Cache[int, map[int]WorkdayResponse]
+	group singleflight.Group
 }
 
 func New(dir string, cacheCap int, logger logging.Logger) *Parser {
@@ -44,6 +46,11 @@ func New(dir string, cacheCap int, logger logging.Logger) *Parser {
 	}
 }
 
+// Parse возвращает календарь месяца из production-calendar файла года.
+//
+// Возвращённый WorkdayResponse read-only: слайс Days шарится с кэшем —
+// не мутировать. При кэш-промахе загрузка файла года выполняется через
+// singleflight: конкурентные запросы одного года читают файл один раз.
 func (p *Parser) Parse(year, month int) (*WorkdayResponse, error) {
 	if month < 1 || month > 12 {
 		return nil, ErrInvalidMonth
@@ -54,11 +61,39 @@ func (p *Parser) Parse(year, month int) (*WorkdayResponse, error) {
 
 	if yearEntries, ok := p.cache.Get(year); ok {
 		if val, ok := yearEntries[month]; ok {
-			return p.cloneResponse(&val), nil
+			return &val, nil
 		}
 		return nil, ErrInvalidMonth
 	}
 
+	v, err, _ := p.group.Do(strconv.Itoa(year), func() (any, error) {
+		// Пока мы ждали singleflight, год мог уже загрузить другой запрос.
+		if yearEntries, ok := p.cache.Get(year); ok {
+			return yearEntries, nil
+		}
+
+		entries, err := p.loadYear(year)
+		if err != nil {
+			return nil, err
+		}
+
+		p.cache.Add(year, entries)
+
+		return entries, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	entries := v.(map[int]WorkdayResponse)
+	if val, ok := entries[month]; ok {
+		return &val, nil
+	}
+
+	return nil, ErrInvalidMonth
+}
+
+func (p *Parser) loadYear(year int) (map[int]WorkdayResponse, error) {
 	fileName := fmt.Sprintf("workdays_%d.json", year)
 	path := filepath.Join(p.dir, fileName)
 
@@ -78,22 +113,5 @@ func (p *Parser) Parse(year, month int) (*WorkdayResponse, error) {
 		return nil, fmt.Errorf("decode workdays file: %w", err)
 	}
 
-	p.cache.Add(year, entries)
-
-	if val, ok := entries[month]; ok {
-		return p.cloneResponse(&val), nil
-	}
-
-	return nil, ErrInvalidMonth
-}
-
-func (p *Parser) cloneResponse(res *WorkdayResponse) *WorkdayResponse {
-	if res == nil {
-		return nil
-	}
-
-	return &WorkdayResponse{
-		Statistics: res.Statistics,
-		Days:       slices.Clone(res.Days),
-	}
+	return entries, nil
 }

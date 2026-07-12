@@ -25,18 +25,18 @@ func (q *Queries) DeleteVacation(ctx context.Context, id pgtype.UUID) error {
 const getVacationsInRange = `-- name: GetVacationsInRange :many
 SELECT id, date_from, date_to
 FROM vacations
-WHERE date_from <= $1
-  AND date_to >= $2
+WHERE daterange(date_from, date_to, '[]') && daterange($1, $2, '[]')
 ORDER BY date_from
 `
 
 type GetVacationsInRangeParams struct {
-	RangeEnd   pgtype.Date
 	RangeStart pgtype.Date
+	RangeEnd   pgtype.Date
 }
 
+// daterange && daterange задействует gist-индекс vacations_no_overlap.
 func (q *Queries) GetVacationsInRange(ctx context.Context, arg GetVacationsInRangeParams) ([]Vacation, error) {
-	rows, err := q.db.Query(ctx, getVacationsInRange, arg.RangeEnd, arg.RangeStart)
+	rows, err := q.db.Query(ctx, getVacationsInRange, arg.RangeStart, arg.RangeEnd)
 	if err != nil {
 		return nil, err
 	}

@@ -7,10 +7,6 @@ import (
 	"salary_calculator/internal/http/handlers/edit_vacation"
 	"salary_calculator/internal/http/handlers/estimate_vacation"
 	"salary_calculator/internal/http/handlers/list_vacations"
-	"salary_calculator/internal/pkg/http/work_calendar_parser"
-	"salary_calculator/internal/services/calculator"
-	"salary_calculator/internal/services/vacation_pay"
-	"salary_calculator/internal/services/work_days"
 	getSalaryReportUC "salary_calculator/internal/usecase/get_salary_report"
 	addVacationUC "salary_calculator/internal/usecase/vacations/add"
 	deleteVacationUC "salary_calculator/internal/usecase/vacations/delete"
@@ -22,26 +18,29 @@ import (
 )
 
 type VacationRoutesRegistrar struct {
-	app *app.App
+	app    *app.App
+	shared *SharedServices
 }
 
-func NewVacationRoutesRegistrar(a *app.App) *VacationRoutesRegistrar {
-	return &VacationRoutesRegistrar{app: a}
+func NewVacationRoutesRegistrar(a *app.App, shared *SharedServices) *VacationRoutesRegistrar {
+	return &VacationRoutesRegistrar{app: a, shared: shared}
 }
 
 func (v *VacationRoutesRegistrar) Register(router chi.Router) {
-	workDaysClient := work_calendar_parser.New(v.app.Config.WorkdaysConfig.Dir, v.app.Config.WorkdaysConfig.CacheCap, v.app.Logger)
-	workDaysCalc := work_days.New()
-	salaryCalc := calculator.New(v.app.Repo)
-	vacationPaySvc := vacation_pay.New(v.app.Repo, workDaysClient)
-	reportUC := getSalaryReportUC.New(v.app.Repo, workDaysClient, workDaysCalc, salaryCalc, vacationPaySvc)
+	reportUC := getSalaryReportUC.New(
+		v.app.Repo,
+		v.shared.WorkdaysParser,
+		v.shared.WorkdaysCalculator,
+		v.shared.SalaryCalculator,
+		v.shared.VacationPay,
+	)
 
 	router.Get("/", list_vacations.New(listVacationsUC.New(v.app.Repo)).ServeHTTP)
 	router.Post("/", add_vacation.NewHandler(addVacationUC.New(v.app.Repo)).ServeHTTP)
 	router.Put("/", edit_vacation.NewHandler(editVacationUC.New(v.app.Repo)).ServeHTTP)
 	router.Delete("/", delete_vacation.NewHandler(deleteVacationUC.New(v.app.Repo)).ServeHTTP)
 	router.Get("/estimate", estimate_vacation.NewHandler(
-		estimateVacationUC.New(v.app.Repo, vacationPaySvc, reportUC),
+		estimateVacationUC.New(v.app.Repo, v.shared.VacationPay, reportUC),
 	).ServeHTTP)
 }
 

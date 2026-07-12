@@ -34,7 +34,14 @@ func (u *usecase) Do(ctx context.Context, in estimate_dto.In) (*estimate_dto.Out
 		return nil, err
 	}
 
-	pay, err := u.vacationPay.CalculatePay(ctx, from, to)
+	// Данные для среднего заработка грузятся один раз на весь estimate-запрос:
+	// и для собственного расчёта, и для каждого месячного отчёта ниже.
+	earnings, err := u.vacationPay.LoadEarningsData(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pay, err := u.vacationPay.CalculatePayWith(earnings, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +67,7 @@ func (u *usecase) Do(ctx context.Context, in estimate_dto.In) (*estimate_dto.Out
 			Year:           cur.Year(),
 			Month:          int(cur.Month()),
 			ExtraVacations: []dbstore.Vacation{hypothetical},
+			Earnings:       earnings,
 		})
 		if err != nil {
 			return nil, err

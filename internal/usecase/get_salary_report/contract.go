@@ -36,5 +36,6 @@ type workdaysCalculator interface {
 }
 
 type vacationPay interface {
-	CalculatePay(ctx context.Context, from, to time.Time) (*vacation_pay.Pay, error)
+	LoadEarningsData(ctx context.Context) (*vacation_pay.EarningsData, error)
+	CalculatePayWith(data *vacation_pay.EarningsData, from, to time.Time) (*vacation_pay.Pay, error)
 }

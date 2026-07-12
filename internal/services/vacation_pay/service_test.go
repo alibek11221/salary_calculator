@@ -97,6 +97,35 @@ func TestPaidDays(t *testing.T) {
 		)
 		assert.Error(t, err)
 	})
+
+	t.Run("day missing from calendar is error", func(t *testing.T) {
+		// juneDays покрывает только 1–19 июня → 20-е не найдено.
+		_, err := svc.PaidDays(
+			time.Date(2026, 6, 19, 0, 0, 0, 0, time.UTC),
+			time.Date(2026, 6, 20, 0, 0, 0, 0, time.UTC),
+		)
+		assert.ErrorContains(t, err, "day 2026-06-20 not found in work calendar")
+	})
+
+	t.Run("period crossing month boundary parses each month once", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		p := NewMockcalendarParser(ctrl)
+		p.EXPECT().Parse(2026, 6).Times(1).Return(&work_calendar_parser.WorkdayResponse{Days: []work_calendar_parser.Day{
+			day(2026, time.June, 29, 1), day(2026, time.June, 30, 1),
+		}}, nil)
+		p.EXPECT().Parse(2026, 7).Times(1).Return(&work_calendar_parser.WorkdayResponse{Days: []work_calendar_parser.Day{
+			day(2026, time.July, 1, 1), day(2026, time.July, 2, 3), // 2 июля — «праздник»
+		}}, nil)
+
+		got, err := vacation_pay.New(NewMockrepo(ctrl), p).PaidDays(
+			time.Date(2026, 6, 29, 0, 0, 0, 0, time.UTC),
+			time.Date(2026, 7, 2, 0, 0, 0, 0, time.UTC),
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, got) // 29, 30 июня и 1 июля; праздник 2 июля не оплачивается
+	})
 }
 
 func TestWorkdayDeduction(t *testing.T) {
@@ -146,55 +175,110 @@ func TestWorkdayDeduction(t *testing.T) {
 	}
 }
 
+func TestLoadEarningsData(t *testing.T) {
+	t.Run("loads changes and bonuses once", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		changes := []dbstore.SalaryChange{{Salary: 100000, ChangeFrom: "2024_01"}}
+		bonuses := []dbstore.Bonuse{{Value: 50000, Date: "2025_03"}}
+
+		r := NewMockrepo(ctrl)
+		r.EXPECT().ListChanges(gomock.Any()).Times(1).Return(changes, nil)
+		r.EXPECT().ListBonuses(gomock.Any()).Times(1).Return(bonuses, nil)
+
+		data, err := vacation_pay.New(r, NewMockcalendarParser(ctrl)).LoadEarningsData(context.Background())
+
+		assert.NoError(t, err)
+		assert.Equal(t, changes, data.Changes)
+		assert.Equal(t, bonuses, data.Bonuses)
+	})
+
+	t.Run("changes error propagates", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		r := NewMockrepo(ctrl)
+		r.EXPECT().ListChanges(gomock.Any()).Return(nil, assert.AnError)
+
+		_, err := vacation_pay.New(r, NewMockcalendarParser(ctrl)).LoadEarningsData(context.Background())
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+
+	t.Run("bonuses error propagates", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		r := NewMockrepo(ctrl)
+		r.EXPECT().ListChanges(gomock.Any()).Return(nil, nil)
+		r.EXPECT().ListBonuses(gomock.Any()).Return(nil, assert.AnError)
+
+		_, err := vacation_pay.New(r, NewMockcalendarParser(ctrl)).LoadEarningsData(context.Background())
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+}
+
 func TestAverageDailyEarnings(t *testing.T) {
 	start := time.Date(2025, 8, 10, 0, 0, 0, 0, time.UTC) // расчётный период 2024_08..2025_07
 
 	tests := []struct {
 		name    string
-		changes []dbstore.SalaryChange
-		bonuses []dbstore.Bonuse
+		data    *vacation_pay.EarningsData
 		want    float64
 		wantErr error
 	}{
 		{
 			name: "full 12 months with raise and bonus",
-			changes: []dbstore.SalaryChange{
-				{Salary: 100000, ChangeFrom: "2024_01"},
-				{Salary: 200000, ChangeFrom: "2025_06"},
-			},
-			bonuses: []dbstore.Bonuse{
-				{Value: 50000, Date: "2025_03"},
-				{Value: 99999, Date: "2023_01"}, // вне периода — игнор
+			data: &vacation_pay.EarningsData{
+				Changes: []dbstore.SalaryChange{
+					{Salary: 100000, ChangeFrom: "2024_01"},
+					{Salary: 200000, ChangeFrom: "2025_06"},
+				},
+				Bonuses: []dbstore.Bonuse{
+					{Value: 50000, Date: "2025_03"},
+					{Value: 99999, Date: "2023_01"}, // вне периода — игнор
+				},
 			},
 			// 10 мес × 100000 + 2 мес × 200000 + 50000 = 1450000
 			want: 1450000.0 / 12.0 / 29.3,
 		},
 		{
 			name: "short history divides by actual months",
-			changes: []dbstore.SalaryChange{
-				{Salary: 200000, ChangeFrom: "2025_06"},
+			data: &vacation_pay.EarningsData{
+				Changes: []dbstore.SalaryChange{
+					{Salary: 200000, ChangeFrom: "2025_06"},
+				},
 			},
 			// Данные только за 2025_06 и 2025_07 → 400000 / 2 / 29.3
 			want: 400000.0 / 2.0 / 29.3,
 		},
 		{
+			name: "duplicate change_from keeps first occurrence",
+			data: &vacation_pay.EarningsData{
+				Changes: []dbstore.SalaryChange{
+					{Salary: 100000, ChangeFrom: "2025_06"},
+					{Salary: 999999, ChangeFrom: "2025_06"}, // дубликат — игнор
+				},
+			},
+			// 2025_06 и 2025_07 по 100000 → 200000 / 2 / 29.3
+			want: 200000.0 / 2.0 / 29.3,
+		},
+		{
 			name:    "no data at all",
-			changes: nil,
+			data:    &vacation_pay.EarningsData{},
+			wantErr: vacation_pay.ErrNoEarningsData,
+		},
+		{
+			name:    "nil data",
+			data:    nil,
 			wantErr: vacation_pay.ErrNoEarningsData,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			r := NewMockrepo(ctrl)
-			r.EXPECT().ListChanges(gomock.Any()).Return(tt.changes, nil)
-			r.EXPECT().ListBonuses(gomock.Any()).AnyTimes().Return(tt.bonuses, nil)
-
-			svc := vacation_pay.New(r, NewMockcalendarParser(ctrl))
-			got, err := svc.AverageDailyEarnings(context.Background(), start)
+			svc := vacation_pay.New(nil, nil)
+			got, err := svc.AverageDailyEarnings(tt.data, start)
 
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
@@ -204,6 +288,32 @@ func TestAverageDailyEarnings(t *testing.T) {
 			assert.InDelta(t, tt.want, got, 0.0001)
 		})
 	}
+}
+
+func TestCalculatePayWith(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	parser := NewMockcalendarParser(ctrl)
+	parser.EXPECT().Parse(2026, 6).AnyTimes().Return(&work_calendar_parser.WorkdayResponse{Days: juneDays()}, nil)
+
+	svc := vacation_pay.New(NewMockrepo(ctrl), parser) // repo не должен трогаться
+
+	data := &vacation_pay.EarningsData{
+		Changes: []dbstore.SalaryChange{
+			{Salary: 293000, ChangeFrom: "2024_01"}, // 293000/29.3 = 10000/день ровно
+		},
+	}
+
+	// 8–14 июня 2026: 6 оплачиваемых дней (12-е — праздник).
+	pay, err := svc.CalculatePayWith(data,
+		time.Date(2026, 6, 8, 0, 0, 0, 0, time.UTC),
+		time.Date(2026, 6, 14, 0, 0, 0, 0, time.UTC),
+	)
+	assert.NoError(t, err)
+	assert.InDelta(t, 10000.0, pay.AvgDaily, 0.0001)
+	assert.Equal(t, 6, pay.PaidDays)
+	assert.InDelta(t, 60000.0, pay.Gross, 0.001)
 }
 
 func TestCalculatePay(t *testing.T) {
