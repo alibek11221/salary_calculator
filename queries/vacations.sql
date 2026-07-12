@@ -4,10 +4,10 @@ FROM vacations
 ORDER BY date_from;
 
 -- name: GetVacationsInRange :many
+-- daterange && daterange задействует gist-индекс vacations_no_overlap.
 SELECT *
 FROM vacations
-WHERE date_from <= sqlc.arg(range_end)
-  AND date_to >= sqlc.arg(range_start)
+WHERE daterange(date_from, date_to, '[]') && daterange(sqlc.arg(range_start), sqlc.arg(range_end), '[]')
 ORDER BY date_from;
 
 -- name: InsertVacation :exec
