@@ -631,6 +631,257 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/vacations/": {
+            "get": {
+                "description": "Возвращает все периоды отпусков",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vacations"
+                ],
+                "summary": "Список отпусков",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_list_vacations.Out"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Обновляет период отпуска по id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vacations"
+                ],
+                "summary": "Изменить отпуск",
+                "parameters": [
+                    {
+                        "description": "Отпуск (id + даты YYYY-MM-DD)",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_vacation.In"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_edit_vacation.Out"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Создает период отпуска. Пересекающиеся периоды запрещены.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vacations"
+                ],
+                "summary": "Добавить отпуск",
+                "parameters": [
+                    {
+                        "description": "Период отпуска (даты в формате YYYY-MM-DD)",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_vacation.In"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_add_vacation.Out"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет период отпуска по id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vacations"
+                ],
+                "summary": "Удалить отпуск",
+                "parameters": [
+                    {
+                        "description": "ID отпуска",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_vacation.In"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_delete_vacation.Out"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vacations/estimate": {
+            "get": {
+                "description": "Считает отпускные и зарплату затронутых месяцев для гипотетического отпуска, ничего не сохраняя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vacations"
+                ],
+                "summary": "Прикидка отпускных",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Начало отпуска (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец отпуска (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/salary_calculator_internal_dto_estimate_vacation.Out"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -810,6 +1061,25 @@ const docTemplate = `{
                 }
             }
         },
+        "salary_calculator_internal_dto_add_vacation.In": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "$ref": "#/definitions/salary_calculator_internal_pkg_types.ISODate"
+                },
+                "to": {
+                    "$ref": "#/definitions/salary_calculator_internal_pkg_types.ISODate"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_add_vacation.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
         "salary_calculator_internal_dto_delete_bonus.In": {
             "type": "object",
             "properties": {
@@ -851,6 +1121,22 @@ const docTemplate = `{
             }
         },
         "salary_calculator_internal_dto_delete_salary_change.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_vacation.In": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_delete_vacation.Out": {
             "type": "object",
             "properties": {
                 "ok": {
@@ -924,6 +1210,68 @@ const docTemplate = `{
             "properties": {
                 "ok": {
                     "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_vacation.In": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "$ref": "#/definitions/salary_calculator_internal_pkg_types.ISODate"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "to": {
+                    "$ref": "#/definitions/salary_calculator_internal_pkg_types.ISODate"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_edit_vacation.Out": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_estimate_vacation.MonthSummary": {
+            "type": "object",
+            "properties": {
+                "advance": {
+                    "type": "number"
+                },
+                "month": {
+                    "type": "string"
+                },
+                "salary": {
+                    "type": "number"
+                },
+                "total": {
+                    "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_dto_estimate_vacation.Out": {
+            "type": "object",
+            "properties": {
+                "affected_months": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/salary_calculator_internal_dto_estimate_vacation.MonthSummary"
+                    }
+                },
+                "avg_daily": {
+                    "type": "number"
+                },
+                "gross": {
+                    "type": "number"
+                },
+                "net": {
+                    "type": "number"
+                },
+                "paid_days": {
+                    "type": "integer"
                 }
             }
         },
@@ -1016,6 +1364,31 @@ const docTemplate = `{
                 }
             }
         },
+        "salary_calculator_internal_dto_list_vacations.Out": {
+            "type": "object",
+            "properties": {
+                "vacations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/salary_calculator_internal_dto_list_vacations.VacationItem"
+                    }
+                }
+            }
+        },
+        "salary_calculator_internal_dto_list_vacations.VacationItem": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "$ref": "#/definitions/salary_calculator_internal_pkg_types.ISODate"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "to": {
+                    "$ref": "#/definitions/salary_calculator_internal_pkg_types.ISODate"
+                }
+            }
+        },
         "salary_calculator_internal_dto_value_objects.ExtraPayment": {
             "type": "object",
             "properties": {
@@ -1059,6 +1432,14 @@ const docTemplate = `{
         },
         "salary_calculator_internal_dto_value_objects.SalaryDate": {
             "type": "object"
+        },
+        "salary_calculator_internal_pkg_types.ISODate": {
+            "type": "object",
+            "properties": {
+                "time.Time": {
+                    "type": "string"
+                }
+            }
         },
         "salary_calculator_internal_services_calculator.SalaryCalculationResult": {
             "type": "object",

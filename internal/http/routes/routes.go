@@ -17,6 +17,7 @@ func NewRoutesRegistrar(a *app.App) *Registrar {
 		NewSalaryRoutesRegistrar(a),
 		NewBonusRoutesRegistrar(a),
 		NewDutyRoutesRegistrar(a),
+		NewVacationRoutesRegistrar(a),
 	}
 
 	return &Registrar{

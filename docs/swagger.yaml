@@ -114,6 +114,18 @@ definitions:
       ok:
         type: boolean
     type: object
+  salary_calculator_internal_dto_add_vacation.In:
+    properties:
+      from:
+        $ref: '#/definitions/salary_calculator_internal_pkg_types.ISODate'
+      to:
+        $ref: '#/definitions/salary_calculator_internal_pkg_types.ISODate'
+    type: object
+  salary_calculator_internal_dto_add_vacation.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
   salary_calculator_internal_dto_delete_bonus.In:
     properties:
       id:
@@ -140,6 +152,16 @@ definitions:
         type: string
     type: object
   salary_calculator_internal_dto_delete_salary_change.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_delete_vacation.In:
+    properties:
+      id:
+        type: string
+    type: object
+  salary_calculator_internal_dto_delete_vacation.Out:
     properties:
       ok:
         type: boolean
@@ -187,6 +209,46 @@ definitions:
     properties:
       ok:
         type: boolean
+    type: object
+  salary_calculator_internal_dto_edit_vacation.In:
+    properties:
+      from:
+        $ref: '#/definitions/salary_calculator_internal_pkg_types.ISODate'
+      id:
+        type: string
+      to:
+        $ref: '#/definitions/salary_calculator_internal_pkg_types.ISODate'
+    type: object
+  salary_calculator_internal_dto_edit_vacation.Out:
+    properties:
+      ok:
+        type: boolean
+    type: object
+  salary_calculator_internal_dto_estimate_vacation.MonthSummary:
+    properties:
+      advance:
+        type: number
+      month:
+        type: string
+      salary:
+        type: number
+      total:
+        type: number
+    type: object
+  salary_calculator_internal_dto_estimate_vacation.Out:
+    properties:
+      affected_months:
+        items:
+          $ref: '#/definitions/salary_calculator_internal_dto_estimate_vacation.MonthSummary'
+        type: array
+      avg_daily:
+        type: number
+      gross:
+        type: number
+      net:
+        type: number
+      paid_days:
+        type: integer
     type: object
   salary_calculator_internal_dto_get_salary_report.Out:
     properties:
@@ -245,6 +307,22 @@ definitions:
           $ref: '#/definitions/salary_calculator_internal_dto_list_salary_changes.Change'
         type: array
     type: object
+  salary_calculator_internal_dto_list_vacations.Out:
+    properties:
+      vacations:
+        items:
+          $ref: '#/definitions/salary_calculator_internal_dto_list_vacations.VacationItem'
+        type: array
+    type: object
+  salary_calculator_internal_dto_list_vacations.VacationItem:
+    properties:
+      from:
+        $ref: '#/definitions/salary_calculator_internal_pkg_types.ISODate'
+      id:
+        type: string
+      to:
+        $ref: '#/definitions/salary_calculator_internal_pkg_types.ISODate'
+    type: object
   salary_calculator_internal_dto_value_objects.ExtraPayment:
     properties:
       name:
@@ -274,6 +352,11 @@ definitions:
         type: number
     type: object
   salary_calculator_internal_dto_value_objects.SalaryDate:
+    type: object
+  salary_calculator_internal_pkg_types.ISODate:
+    properties:
+      time.Time:
+        type: string
     type: object
   salary_calculator_internal_services_calculator.SalaryCalculationResult:
     properties:
@@ -706,4 +789,171 @@ paths:
       summary: Отчет по зарплате
       tags:
       - salary
+  /vacations/:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет период отпуска по id
+      parameters:
+      - description: ID отпуска
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/salary_calculator_internal_dto_delete_vacation.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_delete_vacation.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить отпуск
+      tags:
+      - vacations
+    get:
+      description: Возвращает все периоды отпусков
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_list_vacations.Out'
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Список отпусков
+      tags:
+      - vacations
+    post:
+      consumes:
+      - application/json
+      description: Создает период отпуска. Пересекающиеся периоды запрещены.
+      parameters:
+      - description: Период отпуска (даты в формате YYYY-MM-DD)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/salary_calculator_internal_dto_add_vacation.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_add_vacation.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить отпуск
+      tags:
+      - vacations
+    put:
+      consumes:
+      - application/json
+      description: Обновляет период отпуска по id
+      parameters:
+      - description: Отпуск (id + даты YYYY-MM-DD)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/salary_calculator_internal_dto_edit_vacation.In'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_edit_vacation.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Изменить отпуск
+      tags:
+      - vacations
+  /vacations/estimate:
+    get:
+      description: Считает отпускные и зарплату затронутых месяцев для гипотетического
+        отпуска, ничего не сохраняя
+      parameters:
+      - description: Начало отпуска (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец отпуска (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/salary_calculator_internal_dto_estimate_vacation.Out'
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Прикидка отпускных
+      tags:
+      - vacations
 swagger: "2.0"
