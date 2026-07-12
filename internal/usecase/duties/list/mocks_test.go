@@ -36,17 +36,17 @@ func (m *Mockrepo) EXPECT() *MockrepoMockRecorder {
 	return m.recorder
 }
 
-// ListBonuses mocks base method.
-func (m *Mockrepo) ListBonuses(ctx context.Context) ([]dbstore.Bonuse, error) {
+// ListDuties mocks base method.
+func (m *Mockrepo) ListDuties(ctx context.Context) ([]dbstore.Duty, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListBonuses", ctx)
-	ret0, _ := ret[0].([]dbstore.Bonuse)
+	ret := m.ctrl.Call(m, "ListDuties", ctx)
+	ret0, _ := ret[0].([]dbstore.Duty)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListBonuses indicates an expected call of ListBonuses.
-func (mr *MockrepoMockRecorder) ListBonuses(ctx interface{}) *gomock.Call {
+// ListDuties indicates an expected call of ListDuties.
+func (mr *MockrepoMockRecorder) ListDuties(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBonuses", reflect.TypeOf((*Mockrepo)(nil).ListBonuses), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDuties", reflect.TypeOf((*Mockrepo)(nil).ListDuties), ctx)
 }

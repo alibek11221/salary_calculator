@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"salary_calculator/internal/pkg/logging"
 	"slices"
+
+	"salary_calculator/internal/pkg/logging"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 )

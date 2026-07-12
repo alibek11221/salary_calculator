@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"salary_calculator/internal/pkg/logging"
 	"sync"
 	"testing"
+
+	"salary_calculator/internal/pkg/logging"
 
 	"github.com/stretchr/testify/assert"
 )
