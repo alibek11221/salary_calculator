@@ -1147,9 +1147,6 @@ const docTemplate = `{
         "salary_calculator_internal_dto_edit_bonus.In": {
             "type": "object",
             "properties": {
-                "coefficient": {
-                    "type": "number"
-                },
                 "date": {
                     "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
                 },
@@ -1289,9 +1286,6 @@ const docTemplate = `{
         "salary_calculator_internal_dto_list_bonuses.Bonus": {
             "type": "object",
             "properties": {
-                "coefficient": {
-                    "type": "number"
-                },
                 "date": {
                     "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate"
                 },

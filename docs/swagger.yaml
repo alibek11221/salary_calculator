@@ -168,8 +168,6 @@ definitions:
     type: object
   salary_calculator_internal_dto_edit_bonus.In:
     properties:
-      coefficient:
-        type: number
       date:
         $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
       id:
@@ -259,8 +257,6 @@ definitions:
     type: object
   salary_calculator_internal_dto_list_bonuses.Bonus:
     properties:
-      coefficient:
-        type: number
       date:
         $ref: '#/definitions/salary_calculator_internal_dto_value_objects.SalaryDate'
       id:
