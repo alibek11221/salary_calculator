@@ -16,91 +16,80 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUsecase_Do(t *testing.T) {
-	type fields struct {
-		r *Mockrepo
+func mustDate(s string) *value_objects.SalaryDate {
+	d, err := value_objects.NewSalaryDate(s)
+	if err != nil {
+		panic(err)
 	}
-	type args struct {
-		ctx context.Context
-		in  add_bonus_dto.In
-	}
+	return d
+}
 
-	sd, _ := value_objects.NewSalaryDate("2025_01")
+func TestUsecase_Do(t *testing.T) {
+	validIn := add_bonus_dto.In{Value: 50000, Date: mustDate("2026_07")}
 
 	tests := []struct {
-		name    string
-		setup   func(f fields)
-		args    args
-		want    *add_bonus_dto.Out
-		wantErr error
+		name       string
+		in         add_bonus_dto.In
+		setup      func(r *Mockrepo)
+		want       *add_bonus_dto.Out
+		wantErrIs  error  // sentinel-ошибка, проверяется через errors.Is
+		wantErrMsg string // прочие ошибки, проверяется текст
 	}{
 		{
 			name: "success",
-			args: args{
-				ctx: context.Background(),
-				in: add_bonus_dto.In{
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().InsertBonus(gomock.Any(), dbstore.InsertBonusParams{
 					Value: 50000,
-					Date:  sd,
-				},
-			},
-			setup: func(f fields) {
-				f.r.EXPECT().InsertBonus(gomock.Any(), dbstore.InsertBonusParams{
-					Value:       50000,
-					Date:        sd.String(),
-					Coefficient: 1.5,
+					Date:  "2026_07",
 				}).Return(nil)
 			},
 			want: &add_bonus_dto.Out{Ok: true},
 		},
 		{
-			name: "duplicate error",
-			args: args{
-				ctx: context.Background(),
-				in: add_bonus_dto.In{
-					Value: 50000,
-					Date:  sd,
-				},
-			},
-			setup: func(f fields) {
-				f.r.EXPECT().InsertBonus(gomock.Any(), gomock.Any()).Return(&pgconn.PgError{Code: database.DuplicateEntryCode})
-			},
-			wantErr: add.ErrDuplicateBonus,
+			name:       "nil date",
+			in:         add_bonus_dto.In{Value: 50000},
+			wantErrMsg: "date is required",
 		},
 		{
-			name: "other error",
-			args: args{
-				ctx: context.Background(),
-				in: add_bonus_dto.In{
-					Value: 50000,
-					Date:  sd,
-				},
+			name: "duplicate maps to domain error",
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().InsertBonus(gomock.Any(), gomock.Any()).
+					Return(&pgconn.PgError{Code: database.DuplicateEntryCode})
 			},
-			setup: func(f fields) {
-				f.r.EXPECT().InsertBonus(gomock.Any(), gomock.Any()).Return(errors.New("db error"))
+			wantErrIs: add.ErrDuplicateBonus,
+		},
+		{
+			name: "other db error passes through",
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().InsertBonus(gomock.Any(), gomock.Any()).Return(errors.New("db error"))
 			},
-			wantErr: errors.New("db error"),
+			wantErrMsg: "db error",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			f := fields{
-				r: NewMockrepo(ctrl),
-			}
+			r := NewMockrepo(ctrl)
 			if tt.setup != nil {
-				tt.setup(f)
+				tt.setup(r)
 			}
 
-			u := add.New(f.r)
-			got, err := u.Do(tt.args.ctx, tt.args.in)
+			got, err := add.New(r).Do(context.Background(), tt.in)
 
-			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr.Error(), err.Error())
+			switch {
+			case tt.wantErrIs != nil:
+				assert.ErrorIs(t, err, tt.wantErrIs)
 				assert.Nil(t, got)
-			} else {
+			case tt.wantErrMsg != "":
+				assert.EqualError(t, err, tt.wantErrMsg)
+				assert.Nil(t, got)
+			default:
 				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}

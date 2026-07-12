@@ -8,101 +8,94 @@ import (
 	edit_bonus_dto "salary_calculator/internal/dto/edit_bonus"
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
-	edit_bonus_uc "salary_calculator/internal/usecase/bonuses/edit"
+	"salary_calculator/internal/usecase/bonuses/edit"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUsecase_Do(t *testing.T) {
-	type fields struct {
-		r *Mockrepo
-	}
-	type args struct {
-		ctx context.Context
-		in  edit_bonus_dto.In
-	}
+const bonusID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 
-	sd, _ := value_objects.NewSalaryDate("2025_01")
-	validID := "550e8400-e29b-41d4-a716-446655440000"
-	var pgID pgtype.UUID
-	pgID.Scan(validID)
+func mustDate(s string) *value_objects.SalaryDate {
+	d, err := value_objects.NewSalaryDate(s)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
+
+func mustUUID(s string) pgtype.UUID {
+	var id pgtype.UUID
+	if err := id.Scan(s); err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func TestUsecase_Do(t *testing.T) {
+	validIn := edit_bonus_dto.In{ID: bonusID, Value: 75000, Date: mustDate("2026_07")}
 
 	tests := []struct {
-		name    string
-		setup   func(f fields)
-		args    args
-		want    *edit_bonus_dto.Out
-		wantErr bool
+		name       string
+		in         edit_bonus_dto.In
+		setup      func(r *Mockrepo)
+		want       *edit_bonus_dto.Out
+		wantErrMsg string // ошибка с известным текстом
+		wantAnyErr bool   // любая ошибка, текст не проверяем (зависит от внутренностей pgx)
 	}{
 		{
 			name: "success",
-			args: args{
-				ctx: context.Background(),
-				in: edit_bonus_dto.In{
-					ID:          validID,
-					Value:       75000,
-					Date:        sd,
-					Coefficient: 2.0,
-				},
-			},
-			setup: func(f fields) {
-				f.r.EXPECT().UpdateBonus(gomock.Any(), dbstore.UpdateBonusParams{
-					ID:          pgID,
-					Value:       75000,
-					Date:        sd.String(),
-					Coefficient: 2.0,
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().UpdateBonus(gomock.Any(), dbstore.UpdateBonusParams{
+					ID:    mustUUID(bonusID),
+					Value: 75000,
+					Date:  "2026_07",
 				}).Return(nil)
 			},
 			want: &edit_bonus_dto.Out{Ok: true},
 		},
 		{
-			name: "invalid id",
-			args: args{
-				ctx: context.Background(),
-				in: edit_bonus_dto.In{
-					ID: "invalid-uuid",
-				},
-			},
-			wantErr: true,
+			name:       "nil date",
+			in:         edit_bonus_dto.In{ID: bonusID, Value: 75000},
+			wantErrMsg: "date is required",
 		},
 		{
-			name: "db error",
-			args: args{
-				ctx: context.Background(),
-				in: edit_bonus_dto.In{
-					ID:          validID,
-					Value:       75000,
-					Date:        sd,
-					Coefficient: 2.0,
-				},
+			name:       "invalid id",
+			in:         edit_bonus_dto.In{ID: "not-a-uuid", Value: 75000, Date: mustDate("2026_07")},
+			wantAnyErr: true,
+		},
+		{
+			name: "db error passes through",
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().UpdateBonus(gomock.Any(), gomock.Any()).Return(errors.New("db error"))
 			},
-			setup: func(f fields) {
-				f.r.EXPECT().UpdateBonus(gomock.Any(), gomock.Any()).Return(errors.New("db error"))
-			},
-			wantErr: true,
+			wantErrMsg: "db error",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			f := fields{
-				r: NewMockrepo(ctrl),
-			}
+			r := NewMockrepo(ctrl)
 			if tt.setup != nil {
-				tt.setup(f)
+				tt.setup(r)
 			}
 
-			u := edit_bonus_uc.New(f.r)
-			got, err := u.Do(tt.args.ctx, tt.args.in)
+			got, err := edit.New(r).Do(context.Background(), tt.in)
 
-			if tt.wantErr {
+			switch {
+			case tt.wantAnyErr:
 				assert.Error(t, err)
 				assert.Nil(t, got)
-			} else {
+			case tt.wantErrMsg != "":
+				assert.EqualError(t, err, tt.wantErrMsg)
+				assert.Nil(t, got)
+			default:
 				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}

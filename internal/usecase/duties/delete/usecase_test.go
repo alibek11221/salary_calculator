@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	delete_duty_dto "salary_calculator/internal/dto/delete_duty"
+	"salary_calculator/internal/dto/value_objects"
+	"salary_calculator/internal/generated/dbstore"
 	delete_duty_uc "salary_calculator/internal/usecase/duties/delete"
 
 	"github.com/golang/mock/gomock"
@@ -13,80 +15,83 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUsecase_Do(t *testing.T) {
-	type fields struct {
-		r *Mockrepo
+func mustDate(s string) *value_objects.SalaryDate {
+	d, err := value_objects.NewSalaryDate(s)
+	if err != nil {
+		panic(err)
 	}
-	type args struct {
-		ctx context.Context
-		in  delete_duty_dto.In
-	}
+	return d
+}
 
-	validID := "550e8400-e29b-41d4-a716-446655440000"
-	var pgID pgtype.UUID
-	pgID.Scan(validID)
+func mustUUID(s string) pgtype.UUID {
+	var id pgtype.UUID
+	if err := id.Scan(s); err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func TestUsecase_Do(t *testing.T) {
+	dutyID := mustUUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+	validIn := delete_duty_dto.In{Date: mustDate("2026_07")}
 
 	tests := []struct {
-		name    string
-		setup   func(f fields)
-		args    args
-		want    *delete_duty_dto.Out
-		wantErr bool
+		name       string
+		in         delete_duty_dto.In
+		setup      func(r *Mockrepo)
+		want       *delete_duty_dto.Out
+		wantErrMsg string
 	}{
 		{
 			name: "success",
-			args: args{
-				ctx: context.Background(),
-				in: delete_duty_dto.In{
-					ID: validID,
-				},
-			},
-			setup: func(f fields) {
-				f.r.EXPECT().DeleteDuty(gomock.Any(), pgID).Return(nil)
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().GetDutyByDate(gomock.Any(), "2026_07").
+					Return(dbstore.Duty{ID: dutyID, Date: "2026_07"}, nil)
+				r.EXPECT().DeleteDuty(gomock.Any(), dutyID).Return(nil)
 			},
 			want: &delete_duty_dto.Out{Ok: true},
 		},
 		{
-			name: "invalid id",
-			args: args{
-				ctx: context.Background(),
-				in: delete_duty_dto.In{
-					ID: "invalid-uuid",
-				},
-			},
-			wantErr: true,
+			name:       "nil date",
+			in:         delete_duty_dto.In{},
+			wantErrMsg: "date is required",
 		},
 		{
-			name: "db error",
-			args: args{
-				ctx: context.Background(),
-				in: delete_duty_dto.In{
-					ID: validID,
-				},
+			name: "duty lookup error",
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().GetDutyByDate(gomock.Any(), "2026_07").
+					Return(dbstore.Duty{}, errors.New("not found"))
 			},
-			setup: func(f fields) {
-				f.r.EXPECT().DeleteDuty(gomock.Any(), gomock.Any()).Return(errors.New("db error"))
+			wantErrMsg: "not found",
+		},
+		{
+			name: "delete db error passes through",
+			in:   validIn,
+			setup: func(r *Mockrepo) {
+				r.EXPECT().GetDutyByDate(gomock.Any(), "2026_07").
+					Return(dbstore.Duty{ID: dutyID, Date: "2026_07"}, nil)
+				r.EXPECT().DeleteDuty(gomock.Any(), dutyID).Return(errors.New("db error"))
 			},
-			wantErr: true,
+			wantErrMsg: "db error",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			f := fields{
-				r: NewMockrepo(ctrl),
-			}
+			r := NewMockrepo(ctrl)
 			if tt.setup != nil {
-				tt.setup(f)
+				tt.setup(r)
 			}
 
-			u := delete_duty_uc.New(f.r)
-			got, err := u.Do(tt.args.ctx, tt.args.in)
+			got, err := delete_duty_uc.New(r).Do(context.Background(), tt.in)
 
-			if tt.wantErr {
-				assert.Error(t, err)
+			if tt.wantErrMsg != "" {
+				assert.EqualError(t, err, tt.wantErrMsg)
 				assert.Nil(t, got)
 			} else {
 				assert.NoError(t, err)
