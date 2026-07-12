@@ -23,7 +23,15 @@ func NewServer(a *app.App) (*http.Server, error) {
 	r.Use(logging.GetChiMiddleware(a.Logger))
 	r.Use(middleware.Recoverer)
 	// r.Use(httprate.LimitByRealIP(100, time.Minute))
-	r.Use(middleware.Timeout(60 * time.Second))
+	// Инвариант: request-timeout < WriteTimeout, чтобы middleware успел отдать
+	// 504 до того, как сервер оборвёт соединение. При слишком маленьком
+	// SERVER_WRITE_TIMEOUT запас невозможен — берём WriteTimeout как есть
+	// (504 не гарантируется).
+	requestTimeout := a.Config.Server.WriteTimeout - 5*time.Second
+	if requestTimeout <= 0 {
+		requestTimeout = a.Config.Server.WriteTimeout
+	}
+	r.Use(middleware.Timeout(requestTimeout))
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -42,11 +50,12 @@ func NewServer(a *app.App) (*http.Server, error) {
 	))
 
 	server := &http.Server{
-		Addr:           ":" + a.Config.Port,
-		Handler:        r,
-		ReadTimeout:    a.Config.Server.ReadTimeout,
-		WriteTimeout:   a.Config.Server.WriteTimeout,
-		MaxHeaderBytes: a.Config.Server.MaxHeaderBytes,
+		Addr:              ":" + a.Config.Port,
+		Handler:           r,
+		ReadTimeout:       a.Config.Server.ReadTimeout,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      a.Config.Server.WriteTimeout,
+		MaxHeaderBytes:    a.Config.Server.MaxHeaderBytes,
 	}
 
 	a.Logger.Info().

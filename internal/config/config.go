@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	defaultReadTimeout  = 15 * time.Second
-	defaultWriteTimeout = 15 * time.Second
+	defaultReadTimeout = 15 * time.Second
+	// defaultWriteTimeout больше middleware-таймаута (25s), чтобы обработчик
+	// успел отдать 504 до того, как сервер оборвёт соединение.
+	defaultWriteTimeout = 30 * time.Second
 )
 
 var (
@@ -43,7 +45,7 @@ type DatabaseConfig struct {
 	Password        string
 	Name            string
 	MaxOpenConns    int
-	MaxIdleConns    int
+	MinConns        int
 	ConnMaxLifetime time.Duration
 }
 
@@ -76,7 +78,7 @@ func newConfig() *Config {
 			Password:        getEnvWithDefault("DB_PASSWORD", "postgres"),
 			Name:            getEnvWithDefault("DB_DATABASE", "salary_calculator"),
 			MaxOpenConns:    getEnvAsInt("DB_MAX_OPEN_CONNS", 25),
-			MaxIdleConns:    getEnvAsInt("DB_MAX_IDLE_CONNS", 25),
+			MinConns:        getEnvAsInt("DB_MIN_CONNS", 2),
 			ConnMaxLifetime: envToDuration("DB_CONN_MAX_LIFETIME", time.Hour),
 		},
 	}

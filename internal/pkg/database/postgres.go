@@ -35,8 +35,10 @@ func NewPostgresConnection(cfg *config.Config, logger logging.Logger) (*DB, erro
 	}
 
 	poolConfig.MaxConns = int32(cfg.Database.MaxOpenConns)
-	poolConfig.MinConns = int32(cfg.Database.MaxIdleConns)
+	poolConfig.MinConns = int32(cfg.Database.MinConns)
 	poolConfig.MaxConnLifetime = cfg.Database.ConnMaxLifetime
+	// Джиттер размазывает пересоздание соединений, чтобы пул не «моргал» разом.
+	poolConfig.MaxConnLifetimeJitter = cfg.Database.ConnMaxLifetime / 10
 	poolConfig.MaxConnIdleTime = cfg.Database.ConnMaxLifetime / 2
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
@@ -54,7 +56,7 @@ func NewPostgresConnection(cfg *config.Config, logger logging.Logger) (*DB, erro
 		Str("port", cfg.Database.Port).
 		Str("database", cfg.Database.Name).
 		Int("max_open_conns", cfg.Database.MaxOpenConns).
-		Int("max_idle_conns", cfg.Database.MaxIdleConns).
+		Int("min_conns", cfg.Database.MinConns).
 		Dur("conn_max_lifetime", cfg.Database.ConnMaxLifetime).
 		Msg("database connection established")
 
