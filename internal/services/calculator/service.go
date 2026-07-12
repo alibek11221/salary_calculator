@@ -29,6 +29,8 @@ const (
 	DutyPaymentName  = "За дежурство"
 
 	BonusPaymentName = "Премия"
+
+	VacationPaymentName = "Отпускные"
 )
 
 type SalaryCalculationResult struct {
@@ -97,11 +99,18 @@ func (s *Service) buildExtraPaymentsCollection(
 		extraCollection.Push(dutyPayment)
 	}
 
+	for _, vp := range sCtx.VacationPayments() {
+		extraCollection.Push(vp)
+	}
+
 	return extraCollection
 }
 
 func (s *Service) calculateFoodPayment(sCtx value_objects.SalaryCalculationContext) value_objects.ExtraPayment {
-	foodPay := FoodPaymentForDay * sCtx.Workdays().TotalWorkdays
+	// Еда платится за фактически отработанные дни: половинки месяца уже
+	// уменьшены на дни отпуска, в обычном месяце их сумма равна TotalWorkdays.
+	attendedDays := sCtx.Workdays().FirstHalfDays + sCtx.Workdays().SecondHalfDays
+	foodPay := FoodPaymentForDay * attendedDays
 	return value_objects.ExtraPayment{
 		Value: float64(foodPay),
 		Name:  FoodPaymentName,

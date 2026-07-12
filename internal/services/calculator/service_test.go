@@ -88,6 +88,38 @@ func TestService_CalculateSalary(t *testing.T) {
 			},
 		},
 		{
+			name: "month with vacation",
+			sCtx: func() *value_objects.SalaryCalculationContext {
+				// Отпуск съел 3 рабочих дня первой половины: 10-3=7. Total остаётся 20.
+				c := value_objects.NewSalaryContext(
+					200000,
+					13,
+					work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 7, SecondHalfDays: 10},
+				).WithVacationPayments(value_objects.ExtraPayment{
+					Name:  calculator.VacationPaymentName,
+					Value: 50000, // net, посчитан usecase'ом
+					T:     value_objects.Extra,
+				})
+				return &c
+			}(),
+			setup: func(r *Mockrepo) {
+				r.EXPECT().GetBonusByDate(gomock.Any(), "2025_02").Return(dbstore.Bonuse{}, sql.ErrNoRows)
+				r.EXPECT().GetDutyByDate(gomock.Any(), "2025_01").Return(dbstore.Duty{}, sql.ErrNoRows)
+			},
+			check: func(t *testing.T, got *calculator.SalaryCalculationResult) {
+				// Аванс: 200000/20×7 = 70000 gross → 60900 net.
+				assert.Equal(t, 70000.0, got.GrossAdvance)
+				assert.Equal(t, 60900.0, got.Advance)
+				// Еда по отработанным дням: 529×(7+10)=8993. Зарплата: 87000+8993=95993.
+				assert.Equal(t, 95993.0, got.Salary)
+				// Строки доплат: еда + отпускные.
+				assert.Len(t, got.ExtraPayments.Payments, 2)
+				names := []string{got.ExtraPayments.Payments[0].Name, got.ExtraPayments.Payments[1].Name}
+				assert.Contains(t, names, calculator.VacationPaymentName)
+				assert.Equal(t, 58993.0, got.ExtraPayments.Total) // 8993 + 50000
+			},
+		},
+		{
 			name: "repo error propagates",
 			setup: func(r *Mockrepo) {
 				r.EXPECT().GetBonusByDate(gomock.Any(), gomock.Any()).Return(dbstore.Bonuse{}, assert.AnError)

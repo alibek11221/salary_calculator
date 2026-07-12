@@ -5,9 +5,10 @@ import (
 )
 
 type SalaryCalculationContext struct {
-	currentBase float64
-	currentNDFL float64
-	workdays    work_days.WorkdaysForMonth
+	currentBase      float64
+	currentNDFL      float64
+	workdays         work_days.WorkdaysForMonth
+	vacationPayments []ExtraPayment
 }
 
 func NewSalaryContext(
@@ -32,4 +33,15 @@ func (s *SalaryCalculationContext) CurrentNDFL() float64 {
 
 func (s *SalaryCalculationContext) Workdays() work_days.WorkdaysForMonth {
 	return s.workdays
+}
+
+// WithVacationPayments возвращает копию контекста с net-выплатами отпускных.
+// Суммы уже за вычетом НДФЛ, их готовит usecase.
+func (s SalaryCalculationContext) WithVacationPayments(payments ...ExtraPayment) SalaryCalculationContext {
+	s.vacationPayments = payments
+	return s
+}
+
+func (s *SalaryCalculationContext) VacationPayments() []ExtraPayment {
+	return s.vacationPayments
 }
