@@ -1,6 +1,7 @@
 package vacation_pay_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -143,4 +144,90 @@ func TestWorkdayDeduction(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestAverageDailyEarnings(t *testing.T) {
+	start := time.Date(2025, 8, 10, 0, 0, 0, 0, time.UTC) // расчётный период 2024_08..2025_07
+
+	tests := []struct {
+		name    string
+		changes []dbstore.SalaryChange
+		bonuses []dbstore.Bonuse
+		want    float64
+		wantErr error
+	}{
+		{
+			name: "full 12 months with raise and bonus",
+			changes: []dbstore.SalaryChange{
+				{Salary: 100000, ChangeFrom: "2024_01"},
+				{Salary: 200000, ChangeFrom: "2025_06"},
+			},
+			bonuses: []dbstore.Bonuse{
+				{Value: 50000, Date: "2025_03"},
+				{Value: 99999, Date: "2023_01"}, // вне периода — игнор
+			},
+			// 10 мес × 100000 + 2 мес × 200000 + 50000 = 1450000
+			want: 1450000.0 / 12.0 / 29.3,
+		},
+		{
+			name: "short history divides by actual months",
+			changes: []dbstore.SalaryChange{
+				{Salary: 200000, ChangeFrom: "2025_06"},
+			},
+			// Данные только за 2025_06 и 2025_07 → 400000 / 2 / 29.3
+			want: 400000.0 / 2.0 / 29.3,
+		},
+		{
+			name:    "no data at all",
+			changes: nil,
+			wantErr: vacation_pay.ErrNoEarningsData,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r := NewMockrepo(ctrl)
+			r.EXPECT().ListChanges(gomock.Any()).Return(tt.changes, nil)
+			r.EXPECT().ListBonuses(gomock.Any()).AnyTimes().Return(tt.bonuses, nil)
+
+			svc := vacation_pay.New(r, NewMockcalendarParser(ctrl))
+			got, err := svc.AverageDailyEarnings(context.Background(), start)
+
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			assert.NoError(t, err)
+			assert.InDelta(t, tt.want, got, 0.0001)
+		})
+	}
+}
+
+func TestCalculatePay(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := NewMockrepo(ctrl)
+	r.EXPECT().ListChanges(gomock.Any()).Return([]dbstore.SalaryChange{
+		{Salary: 293000, ChangeFrom: "2024_01"}, // 293000/29.3 = 10000/день ровно
+	}, nil)
+	r.EXPECT().ListBonuses(gomock.Any()).Return(nil, nil)
+
+	parser := NewMockcalendarParser(ctrl)
+	parser.EXPECT().Parse(2026, 6).AnyTimes().Return(&work_calendar_parser.WorkdayResponse{Days: juneDays()}, nil)
+
+	svc := vacation_pay.New(r, parser)
+
+	// 8–14 июня 2026: 6 оплачиваемых дней (12-е — праздник).
+	pay, err := svc.CalculatePay(context.Background(),
+		time.Date(2026, 6, 8, 0, 0, 0, 0, time.UTC),
+		time.Date(2026, 6, 14, 0, 0, 0, 0, time.UTC),
+	)
+	assert.NoError(t, err)
+	assert.InDelta(t, 10000.0, pay.AvgDaily, 0.0001)
+	assert.Equal(t, 6, pay.PaidDays)
+	assert.InDelta(t, 60000.0, pay.Gross, 0.001)
 }

@@ -1,6 +1,7 @@
 package vacation_pay
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -12,6 +13,9 @@ import (
 
 // AvgCalendarDaysPerMonth — среднемесячное число календарных дней (ст. 139 ТК РФ).
 const AvgCalendarDaysPerMonth = 29.3
+
+// monthsInAvgPeriod — расчётный период среднего заработка (ст. 139 ТК).
+const monthsInAvgPeriod = 12
 
 const (
 	dayTypeWorkday   = 1
@@ -51,6 +55,94 @@ func ValidatePeriod(from, to time.Time) error {
 		return ErrInvalidPeriod
 	}
 	return nil
+}
+
+// Pay — результат расчёта отпускных (до НДФЛ).
+type Pay struct {
+	AvgDaily float64
+	PaidDays int
+	Gross    float64
+}
+
+// AverageDailyEarnings — средний дневной заработок за 12 календарных месяцев
+// до месяца начала отпуска: (оклад + премии) по месяцам / N / 29.3.
+// Месяцы без данных об окладе выпадают и из суммы, и из делителя.
+func (s *Service) AverageDailyEarnings(ctx context.Context, vacationStart time.Time) (float64, error) {
+	changes, err := s.r.ListChanges(ctx)
+	if err != nil {
+		return 0, err
+	}
+	bonuses, err := s.r.ListBonuses(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	bonusByMonth := make(map[string]float64, len(bonuses))
+	for _, b := range bonuses {
+		bonusByMonth[b.Date] += b.Value
+	}
+
+	var (
+		total          float64
+		monthsWithData int
+	)
+
+	month := value_objects.From(vacationStart.Year(), int(vacationStart.Month()))
+	for i := 0; i < monthsInAvgPeriod; i++ {
+		month = month.PreviousMonth()
+
+		salary, ok := salaryForMonth(changes, month.String())
+		if !ok {
+			continue
+		}
+
+		total += salary + bonusByMonth[month.String()]
+		monthsWithData++
+	}
+
+	if monthsWithData == 0 {
+		return 0, ErrNoEarningsData
+	}
+
+	return total / float64(monthsWithData) / AvgCalendarDaysPerMonth, nil
+}
+
+// CalculatePay — отпускные (gross) за период.
+func (s *Service) CalculatePay(ctx context.Context, from, to time.Time) (*Pay, error) {
+	avg, err := s.AverageDailyEarnings(ctx, from)
+	if err != nil {
+		return nil, err
+	}
+
+	days, err := s.PaidDays(from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Pay{
+		AvgDaily: avg,
+		PaidDays: days,
+		Gross:    avg * float64(days),
+	}, nil
+}
+
+// salaryForMonth — оклад, действующий в месяце "YYYY_MM": последний change_from <= месяца.
+// Ключи zero-padded, поэтому лексикографическое сравнение совпадает с хронологией.
+func salaryForMonth(changes []dbstore.SalaryChange, month string) (float64, bool) {
+	var (
+		best  string
+		value float64
+		found bool
+	)
+	for _, c := range changes {
+		if c.ChangeFrom > month {
+			continue
+		}
+		if !found || c.ChangeFrom > best {
+			best, value, found = c.ChangeFrom, c.Salary, true
+		}
+	}
+	return value, found
 }
 
 // PaidDays — оплачиваемые дни отпуска: календарные дни периода минус
