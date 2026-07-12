@@ -26,3 +26,9 @@ type SalaryChange struct {
 	Salary     float64
 	ChangeFrom string
 }
+
+type Vacation struct {
+	ID       pgtype.UUID
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}

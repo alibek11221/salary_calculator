@@ -78,8 +78,8 @@ func (q *Queries) ListBonuses(ctx context.Context) ([]Bonuse, error) {
 
 const updateBonus = `-- name: UpdateBonus :exec
 UPDATE bonuses
-SET value       = $2,
-    date        = $3
+SET value = $2,
+    date  = $3
 WHERE id = $1
 `
 
