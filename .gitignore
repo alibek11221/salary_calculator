@@ -26,6 +26,9 @@ go.work.sum
 .env.*
 .envrc
 
+# Personal seed data — real values stay local, use the .example template instead
+migrations/20251207151005_insert_salary_changes.sql
+
 # Logs
 logs/
 log/
