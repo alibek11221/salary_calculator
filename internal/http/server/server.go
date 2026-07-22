@@ -22,7 +22,6 @@ func NewServer(a *app.App) (*http.Server, error) {
 	r.Use(middleware.RealIP)
 	r.Use(logging.GetChiMiddleware(a.Logger))
 	r.Use(middleware.Recoverer)
-	// r.Use(httprate.LimitByRealIP(100, time.Minute))
 	// Инвариант: request-timeout < WriteTimeout, чтобы middleware успел отдать
 	// 504 до того, как сервер оборвёт соединение. При слишком маленьком
 	// SERVER_WRITE_TIMEOUT запас невозможен — берём WriteTimeout как есть

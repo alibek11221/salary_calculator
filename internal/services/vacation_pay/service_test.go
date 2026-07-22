@@ -5,10 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
 	"salary_calculator/internal/pkg/http/work_calendar_parser"
 	"salary_calculator/internal/pkg/types"
 	"salary_calculator/internal/services/vacation_pay"
+	"salary_calculator/internal/services/work_days"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -314,6 +316,119 @@ func TestCalculatePayWith(t *testing.T) {
 	assert.InDelta(t, 10000.0, pay.AvgDaily, 0.0001)
 	assert.Equal(t, 6, pay.PaidDays)
 	assert.InDelta(t, 60000.0, pay.Gross, 0.001)
+}
+
+func TestNetPaymentsForMonth(t *testing.T) {
+	// Оклад 293000 с 2024_01 → средний дневной ровно 10000.
+	changes := []dbstore.SalaryChange{{Salary: 293000, ChangeFrom: "2024_01"}}
+
+	newParser := func(ctrl *gomock.Controller) *MockcalendarParser {
+		parser := NewMockcalendarParser(ctrl)
+		parser.EXPECT().Parse(2026, 6).AnyTimes().Return(&work_calendar_parser.WorkdayResponse{Days: juneDays()}, nil)
+		return parser
+	}
+
+	t.Run("net payment for vacation starting in month", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		r := NewMockrepo(ctrl)
+		r.EXPECT().ListChanges(gomock.Any()).Times(1).Return(changes, nil)
+		r.EXPECT().ListBonuses(gomock.Any()).Times(1).Return(nil, nil)
+
+		svc := vacation_pay.New(r, newParser(ctrl))
+
+		// 8–14 июня: 6 оплачиваемых дней (12-е — праздник) → gross 60000.
+		got, err := svc.NetPaymentsForMonth(context.Background(),
+			[]dbstore.Vacation{vacation(2026, time.June, 8, 2026, time.June, 14)},
+			2026, 6, 13, nil,
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(t, []value_objects.ExtraPayment{{
+			Name:  vacation_pay.PaymentName,
+			Value: 52200, // 60000 − 13%
+			T:     value_objects.Extra,
+		}}, got)
+	})
+
+	t.Run("two vacations load earnings data once", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		r := NewMockrepo(ctrl)
+		r.EXPECT().ListChanges(gomock.Any()).Times(1).Return(changes, nil)
+		r.EXPECT().ListBonuses(gomock.Any()).Times(1).Return(nil, nil)
+
+		svc := vacation_pay.New(r, newParser(ctrl))
+
+		got, err := svc.NetPaymentsForMonth(context.Background(),
+			[]dbstore.Vacation{
+				vacation(2026, time.June, 2, 2026, time.June, 3),
+				vacation(2026, time.June, 8, 2026, time.June, 8),
+			},
+			2026, 6, 13, nil,
+		)
+
+		assert.NoError(t, err)
+		assert.Len(t, got, 2)
+	})
+
+	t.Run("vacation starting previous month skipped without loading", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// repo не должен трогаться: единственный отпуск начался в мае.
+		svc := vacation_pay.New(NewMockrepo(ctrl), newParser(ctrl))
+
+		got, err := svc.NetPaymentsForMonth(context.Background(),
+			[]dbstore.Vacation{vacation(2026, time.May, 25, 2026, time.June, 3)},
+			2026, 6, 13, nil,
+		)
+
+		assert.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("pre-supplied earnings skip loading", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// repo не должен трогаться — данные пришли снаружи.
+		svc := vacation_pay.New(NewMockrepo(ctrl), newParser(ctrl))
+
+		got, err := svc.NetPaymentsForMonth(context.Background(),
+			[]dbstore.Vacation{vacation(2026, time.June, 8, 2026, time.June, 14)},
+			2026, 6, 13, &vacation_pay.EarningsData{Changes: changes},
+		)
+
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+	})
+
+	t.Run("load earnings error propagates", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		r := NewMockrepo(ctrl)
+		r.EXPECT().ListChanges(gomock.Any()).Return(nil, assert.AnError)
+
+		svc := vacation_pay.New(r, newParser(ctrl))
+
+		_, err := svc.NetPaymentsForMonth(context.Background(),
+			[]dbstore.Vacation{vacation(2026, time.June, 8, 2026, time.June, 14)},
+			2026, 6, 13, nil,
+		)
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+}
+
+func TestDeductionApplyTo(t *testing.T) {
+	w := work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 10, SecondHalfDays: 10}
+
+	vacation_pay.Deduction{FirstHalf: 3, SecondHalf: 2}.ApplyTo(&w)
+
+	assert.Equal(t, work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 7, SecondHalfDays: 8}, w)
 }
 
 func TestCalculatePay(t *testing.T) {

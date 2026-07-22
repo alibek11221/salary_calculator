@@ -32,8 +32,8 @@ func TestUsecase_Do(t *testing.T) {
 		in         add_duty_dto.In
 		setup      func(r *Mockrepo)
 		want       *add_duty_dto.Out
-		wantErrIs  error  // sentinel-ошибка, проверяется через errors.Is
-		wantErrMsg string // прочие ошибки, проверяется текст
+		wantErrIs  error
+		wantErrMsg string
 	}{
 		{
 			name: "success",

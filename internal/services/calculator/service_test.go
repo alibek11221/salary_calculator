@@ -8,6 +8,7 @@ import (
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
 	"salary_calculator/internal/services/calculator"
+	"salary_calculator/internal/services/vacation_pay"
 	"salary_calculator/internal/services/work_days"
 
 	"github.com/golang/mock/gomock"
@@ -96,8 +97,8 @@ func TestService_CalculateSalary(t *testing.T) {
 					13,
 					work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 7, SecondHalfDays: 10},
 				).WithVacationPayments(value_objects.ExtraPayment{
-					Name:  calculator.VacationPaymentName,
-					Value: 50000, // net, посчитан usecase'ом
+					Name:  vacation_pay.PaymentName,
+					Value: 50000, // net, посчитан сервисом vacation_pay
 					T:     value_objects.Extra,
 				})
 				return &c
@@ -115,7 +116,7 @@ func TestService_CalculateSalary(t *testing.T) {
 				// Строки доплат: еда + отпускные.
 				assert.Len(t, got.ExtraPayments.Payments, 2)
 				names := []string{got.ExtraPayments.Payments[0].Name, got.ExtraPayments.Payments[1].Name}
-				assert.Contains(t, names, calculator.VacationPaymentName)
+				assert.Contains(t, names, vacation_pay.PaymentName)
 				assert.Equal(t, 58993.0, got.ExtraPayments.Total) // 8993 + 50000
 			},
 		},
@@ -125,7 +126,7 @@ func TestService_CalculateSalary(t *testing.T) {
 				r.EXPECT().GetBonusByDate(gomock.Any(), gomock.Any()).Return(dbstore.Bonuse{}, assert.AnError)
 				r.EXPECT().GetDutyByDate(gomock.Any(), gomock.Any()).AnyTimes().Return(dbstore.Duty{}, sql.ErrNoRows)
 			},
-			check: nil, // ожидаем ошибку
+			check: nil,
 		},
 	}
 

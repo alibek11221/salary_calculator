@@ -41,8 +41,8 @@ func TestUsecase_Do(t *testing.T) {
 		in         edit_bonus_dto.In
 		setup      func(r *Mockrepo)
 		want       *edit_bonus_dto.Out
-		wantErrMsg string // ошибка с известным текстом
-		wantAnyErr bool   // любая ошибка, текст не проверяем (зависит от внутренностей pgx)
+		wantErrMsg string
+		wantAnyErr bool // текст не проверяем — зависит от внутренностей pgx
 	}{
 		{
 			name: "success",

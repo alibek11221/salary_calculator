@@ -67,7 +67,6 @@ func (p *Parser) Parse(year, month int) (*WorkdayResponse, error) {
 	}
 
 	v, err, _ := p.group.Do(strconv.Itoa(year), func() (any, error) {
-		// Пока мы ждали singleflight, год мог уже загрузить другой запрос.
 		if yearEntries, ok := p.cache.Get(year); ok {
 			return yearEntries, nil
 		}

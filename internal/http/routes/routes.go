@@ -10,8 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// SharedServices — сервисы расчёта зарплаты, общие для регистраторов роутов.
-// Создаются один раз, чтобы парсер календаря (и его LRU-кэш) не дублировался.
+// SharedServices создаются один раз, чтобы парсер календаря (и его LRU-кэш)
+// не дублировался между регистраторами роутов.
 type SharedServices struct {
 	WorkdaysParser     *work_calendar_parser.Parser
 	WorkdaysCalculator *work_days.Service

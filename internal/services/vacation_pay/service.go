@@ -10,10 +10,14 @@ import (
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
 	"salary_calculator/internal/pkg/http/work_calendar_parser"
+	"salary_calculator/internal/pkg/utils"
+	"salary_calculator/internal/services/work_days"
 )
 
 // AvgCalendarDaysPerMonth — среднемесячное число календарных дней (ст. 139 ТК РФ).
 const AvgCalendarDaysPerMonth = 29.3
+
+const PaymentName = "Отпускные"
 
 // monthsInAvgPeriod — расчётный период среднего заработка (ст. 139 ТК).
 const monthsInAvgPeriod = 12
@@ -44,7 +48,11 @@ type Deduction struct {
 	SecondHalf int
 }
 
-// ValidatePeriod проверяет базовую корректность периода отпуска.
+func (d Deduction) ApplyTo(w *work_days.WorkdaysForMonth) {
+	w.FirstHalfDays -= d.FirstHalf
+	w.SecondHalfDays -= d.SecondHalf
+}
+
 func ValidatePeriod(from, to time.Time) error {
 	if from.IsZero() || to.IsZero() {
 		return ErrInvalidPeriod
@@ -65,8 +73,8 @@ type Pay struct {
 	Gross    float64
 }
 
-// EarningsData — все данные из БД, нужные для расчёта среднего заработка.
-// Загружается один раз (LoadEarningsData) и переиспользуется между расчётами.
+// EarningsData загружается один раз (LoadEarningsData) и переиспользуется
+// между расчётами среднего заработка.
 type EarningsData struct {
 	Changes []dbstore.SalaryChange
 	Bonuses []dbstore.Bonuse
@@ -146,7 +154,46 @@ func (s *Service) CalculatePayWith(data *EarningsData, from, to time.Time) (*Pay
 	}, nil
 }
 
-// CalculatePay — отпускные (gross) за период: LoadEarningsData + CalculatePayWith.
+// NetPaymentsForMonth пропускает отпуска, начавшиеся вне year/month:
+// их выплата целиком показана в месяце начала отпуска.
+func (s *Service) NetPaymentsForMonth(
+	ctx context.Context,
+	vacations []dbstore.Vacation,
+	year, month int,
+	ndfl float64,
+	earnings *EarningsData,
+) ([]value_objects.ExtraPayment, error) {
+	payments := make([]value_objects.ExtraPayment, 0, len(vacations))
+
+	for _, v := range vacations {
+		start := v.DateFrom.Time
+		if start.Year() != year || int(start.Month()) != month {
+			continue
+		}
+
+		if earnings == nil {
+			var err error
+			earnings, err = s.LoadEarningsData(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		pay, err := s.CalculatePayWith(earnings, v.DateFrom.Time, v.DateTo.Time)
+		if err != nil {
+			return nil, err
+		}
+
+		payments = append(payments, value_objects.ExtraPayment{
+			Name:  PaymentName,
+			Value: utils.ToTwoDecimals(utils.SubPercentage(pay.Gross, ndfl)),
+			T:     value_objects.Extra,
+		})
+	}
+
+	return payments, nil
+}
+
 func (s *Service) CalculatePay(ctx context.Context, from, to time.Time) (*Pay, error) {
 	data, err := s.LoadEarningsData(ctx)
 	if err != nil {

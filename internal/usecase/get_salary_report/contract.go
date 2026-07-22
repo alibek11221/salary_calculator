@@ -2,7 +2,6 @@ package get_salary_report
 
 import (
 	"context"
-	"time"
 
 	"salary_calculator/internal/dto/value_objects"
 	"salary_calculator/internal/generated/dbstore"
@@ -36,6 +35,11 @@ type workdaysCalculator interface {
 }
 
 type vacationPay interface {
-	LoadEarningsData(ctx context.Context) (*vacation_pay.EarningsData, error)
-	CalculatePayWith(data *vacation_pay.EarningsData, from, to time.Time) (*vacation_pay.Pay, error)
+	NetPaymentsForMonth(
+		ctx context.Context,
+		vacations []dbstore.Vacation,
+		year, month int,
+		ndfl float64,
+		earnings *vacation_pay.EarningsData,
+	) ([]value_objects.ExtraPayment, error)
 }

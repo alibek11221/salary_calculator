@@ -12,7 +12,6 @@ import (
 	"salary_calculator/internal/generated/dbstore"
 	wc "salary_calculator/internal/pkg/http/work_calendar_parser"
 	"salary_calculator/internal/pkg/utils"
-	"salary_calculator/internal/services/calculator"
 	"salary_calculator/internal/services/vacation_pay"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -104,13 +103,11 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 	vacations = append(vacations, dbVacations...)
 	vacations = append(vacations, in.ExtraVacations...)
 
-	ded := vacation_pay.WorkdayDeduction(wdr.Days, vacations)
-	wDays.FirstHalfDays -= ded.FirstHalf
-	wDays.SecondHalfDays -= ded.SecondHalf
+	vacation_pay.WorkdayDeduction(wdr.Days, vacations).ApplyTo(wDays)
 
 	ndfl := utils.CalculateNDFL(latestSalary.Salary)
 
-	vacationPayments, err := u.vacationPayments(ctx, vacations, in.Year, in.Month, ndfl, in.Earnings)
+	vacationPayments, err := u.vacationPay.NetPaymentsForMonth(ctx, vacations, in.Year, in.Month, ndfl, in.Earnings)
 	if err != nil {
 		return nil, err
 	}
@@ -127,47 +124,4 @@ func (u *usecase) Do(ctx context.Context, in get_salary_report.In) (*get_salary_
 		BaseSalary: latestSalary.Salary,
 		Result:     calc,
 	}, nil
-}
-
-// vacationPayments — net-суммы отпускных для отпусков, начинающихся в отчётном
-// месяце. Отпуск, начавшийся в прошлом месяце и заехавший в отчётный, здесь
-// пропускается: его выплата целиком показана в месяце начала.
-// Данные для среднего заработка (earnings) загружаются лениво и максимум один
-// раз на запрос; переданные снаружи (estimate) переиспользуются как есть.
-func (u *usecase) vacationPayments(
-	ctx context.Context,
-	vacations []dbstore.Vacation,
-	year, month int,
-	ndfl float64,
-	earnings *vacation_pay.EarningsData,
-) ([]value_objects.ExtraPayment, error) {
-	payments := make([]value_objects.ExtraPayment, 0, len(vacations))
-
-	for _, v := range vacations {
-		start := v.DateFrom.Time
-		if start.Year() != year || int(start.Month()) != month {
-			continue
-		}
-
-		if earnings == nil {
-			var err error
-			earnings, err = u.vacationPay.LoadEarningsData(ctx)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		pay, err := u.vacationPay.CalculatePayWith(earnings, v.DateFrom.Time, v.DateTo.Time)
-		if err != nil {
-			return nil, err
-		}
-
-		payments = append(payments, value_objects.ExtraPayment{
-			Name:  calculator.VacationPaymentName,
-			Value: utils.ToTwoDecimals(utils.SubPercentage(pay.Gross, ndfl)),
-			T:     value_objects.Extra,
-		})
-	}
-
-	return payments, nil
 }

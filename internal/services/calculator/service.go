@@ -29,8 +29,6 @@ const (
 	DutyPaymentName  = "За дежурство"
 
 	BonusPaymentName = "Премия"
-
-	VacationPaymentName = "Отпускные"
 )
 
 type SalaryCalculationResult struct {

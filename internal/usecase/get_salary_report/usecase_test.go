@@ -78,6 +78,8 @@ func TestUsecase_Do(t *testing.T) {
 		f.parser.EXPECT().Parse(2026, 6).Return(juneCalendar(), nil)
 		f.wdCalc.EXPECT().CalculateWorkDaysForMonth(gomock.Any()).
 			Return(&work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 10, SecondHalfDays: 10})
+		f.vacPay.EXPECT().NetPaymentsForMonth(gomock.Any(), []dbstore.Vacation{}, 2026, 6, 13.0, nil).
+			Return(nil, nil)
 
 		var gotCtx value_objects.SalaryCalculationContext
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -115,10 +117,13 @@ func TestUsecase_Do(t *testing.T) {
 		f.parser.EXPECT().Parse(2026, 6).Return(juneCalendar(), nil)
 		f.wdCalc.EXPECT().CalculateWorkDaysForMonth(gomock.Any()).
 			Return(&work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 10, SecondHalfDays: 10})
-		earnings := &vacation_pay.EarningsData{}
-		f.vacPay.EXPECT().LoadEarningsData(gomock.Any()).Times(1).Return(earnings, nil)
-		f.vacPay.EXPECT().CalculatePayWith(earnings, vac.DateFrom.Time, vac.DateTo.Time).
-			Return(&vacation_pay.Pay{AvgDaily: 5000, PaidDays: 7, Gross: 35000}, nil)
+		payment := value_objects.ExtraPayment{
+			Name:  vacation_pay.PaymentName,
+			Value: 30450,
+			T:     value_objects.Extra,
+		}
+		f.vacPay.EXPECT().NetPaymentsForMonth(gomock.Any(), []dbstore.Vacation{vac}, 2026, 6, 13.0, nil).
+			Return([]value_objects.ExtraPayment{payment}, nil)
 
 		var gotCtx value_objects.SalaryCalculationContext
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -135,58 +140,10 @@ func TestUsecase_Do(t *testing.T) {
 		assert.Equal(t, 5, gotCtx.Workdays().FirstHalfDays)
 		assert.Equal(t, 10, gotCtx.Workdays().SecondHalfDays)
 		require.Len(t, gotCtx.VacationPayments(), 1)
-		p := gotCtx.VacationPayments()[0]
-		assert.Equal(t, calculator.VacationPaymentName, p.Name)
-		assert.Equal(t, value_objects.Extra, p.T)
-		assert.Equal(t, 30450.0, p.Value) // 35000 − 13%
+		assert.Equal(t, payment, gotCtx.VacationPayments()[0])
 	})
 
-	t.Run("two vacations load earnings data once", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		f := newFields(ctrl)
-
-		vac1 := dbstore.Vacation{
-			ID:       pgtype.UUID{Bytes: [16]byte{1}, Valid: true},
-			DateFrom: pgDate(2026, time.June, 2),
-			DateTo:   pgDate(2026, time.June, 3),
-		}
-		vac2 := dbstore.Vacation{
-			ID:       pgtype.UUID{Bytes: [16]byte{2}, Valid: true},
-			DateFrom: pgDate(2026, time.June, 8),
-			DateTo:   pgDate(2026, time.June, 8),
-		}
-
-		f.r.EXPECT().GetLatestChangeBeforeDate(gomock.Any(), "2026_06").
-			Return(dbstore.SalaryChange{Salary: 100000, ChangeFrom: "2026_01"}, nil)
-		f.r.EXPECT().GetVacationsInRange(gomock.Any(), gomock.Any()).
-			Return([]dbstore.Vacation{vac1, vac2}, nil)
-		f.parser.EXPECT().Parse(2026, 6).Return(juneCalendar(), nil)
-		f.wdCalc.EXPECT().CalculateWorkDaysForMonth(gomock.Any()).
-			Return(&work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 10, SecondHalfDays: 10})
-
-		earnings := &vacation_pay.EarningsData{}
-		f.vacPay.EXPECT().LoadEarningsData(gomock.Any()).Times(1).Return(earnings, nil)
-		f.vacPay.EXPECT().CalculatePayWith(earnings, vac1.DateFrom.Time, vac1.DateTo.Time).
-			Return(&vacation_pay.Pay{Gross: 10000}, nil)
-		f.vacPay.EXPECT().CalculatePayWith(earnings, vac2.DateFrom.Time, vac2.DateTo.Time).
-			Return(&vacation_pay.Pay{Gross: 5000}, nil)
-
-		var gotCtx value_objects.SalaryCalculationContext
-		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(_ context.Context, _ value_objects.SalaryDate, sCtx value_objects.SalaryCalculationContext) (*calculator.SalaryCalculationResult, error) {
-				gotCtx = sCtx
-				return &calculator.SalaryCalculationResult{Total: 1}, nil
-			})
-
-		u := uc.New(f.r, f.parser, f.wdCalc, f.salCalc, f.vacPay)
-		_, err := u.Do(context.Background(), in)
-
-		require.NoError(t, err)
-		require.Len(t, gotCtx.VacationPayments(), 2)
-	})
-
-	t.Run("pre-supplied earnings skip loading", func(t *testing.T) {
+	t.Run("pre-supplied earnings forwarded to vacation pay", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		f := newFields(ctrl)
@@ -205,9 +162,8 @@ func TestUsecase_Do(t *testing.T) {
 			Return(&work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 10, SecondHalfDays: 10})
 
 		earnings := &vacation_pay.EarningsData{}
-		// LoadEarningsData не должен вызываться — данные пришли в in.Earnings.
-		f.vacPay.EXPECT().CalculatePayWith(earnings, vac.DateFrom.Time, vac.DateTo.Time).
-			Return(&vacation_pay.Pay{Gross: 10000}, nil)
+		f.vacPay.EXPECT().NetPaymentsForMonth(gomock.Any(), []dbstore.Vacation{vac}, 2026, 6, 13.0, earnings).
+			Return(nil, nil)
 
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(&calculator.SalaryCalculationResult{Total: 1}, nil)
@@ -218,7 +174,7 @@ func TestUsecase_Do(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("vacation starting previous month gives no payment", func(t *testing.T) {
+	t.Run("vacation tail from previous month still reduces days", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		f := newFields(ctrl)
@@ -235,6 +191,8 @@ func TestUsecase_Do(t *testing.T) {
 		f.parser.EXPECT().Parse(2026, 6).Return(juneCalendar(), nil)
 		f.wdCalc.EXPECT().CalculateWorkDaysForMonth(gomock.Any()).
 			Return(&work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 10, SecondHalfDays: 10})
+		f.vacPay.EXPECT().NetPaymentsForMonth(gomock.Any(), []dbstore.Vacation{vac}, 2026, 6, 13.0, nil).
+			Return(nil, nil)
 
 		var gotCtx value_objects.SalaryCalculationContext
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -250,6 +208,25 @@ func TestUsecase_Do(t *testing.T) {
 		// Хвост отпуска съел рабочие 1,2,3 июня, но выплата была в мае.
 		assert.Equal(t, 7, gotCtx.Workdays().FirstHalfDays)
 		assert.Empty(t, gotCtx.VacationPayments())
+	})
+
+	t.Run("vacation payments error propagates", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		f := newFields(ctrl)
+
+		f.r.EXPECT().GetLatestChangeBeforeDate(gomock.Any(), gomock.Any()).
+			Return(dbstore.SalaryChange{Salary: 100000, ChangeFrom: "2026_01"}, nil)
+		f.r.EXPECT().GetVacationsInRange(gomock.Any(), gomock.Any()).Return(nil, nil)
+		f.parser.EXPECT().Parse(2026, 6).Return(juneCalendar(), nil)
+		f.wdCalc.EXPECT().CalculateWorkDaysForMonth(gomock.Any()).
+			Return(&work_days.WorkdaysForMonth{TotalWorkdays: 20, FirstHalfDays: 10, SecondHalfDays: 10})
+		f.vacPay.EXPECT().NetPaymentsForMonth(gomock.Any(), gomock.Any(), 2026, 6, 13.0, nil).
+			Return(nil, assert.AnError)
+
+		u := uc.New(f.r, f.parser, f.wdCalc, f.salCalc, f.vacPay)
+		_, err := u.Do(context.Background(), in)
+		assert.ErrorIs(t, err, assert.AnError)
 	})
 
 	t.Run("no salary change found", func(t *testing.T) {

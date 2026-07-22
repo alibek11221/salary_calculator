@@ -35,8 +35,7 @@ func (s *SalaryCalculationContext) Workdays() work_days.WorkdaysForMonth {
 	return s.workdays
 }
 
-// WithVacationPayments возвращает копию контекста с net-выплатами отпускных.
-// Суммы уже за вычетом НДФЛ, их готовит usecase.
+// Суммы уже net (за вычетом НДФЛ), их готовит сервис vacation_pay.
 func (s SalaryCalculationContext) WithVacationPayments(payments ...ExtraPayment) SalaryCalculationContext {
 	s.vacationPayments = payments
 	return s

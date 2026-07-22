@@ -21,7 +21,6 @@ func (u *usecase) Do(ctx context.Context, in edit_duty.In) (*edit_duty.Out, erro
 		return nil, errors.New("date is required")
 	}
 
-	// Get existing duty by date to obtain its ID
 	existingDuty, err := u.r.GetDutyByDate(ctx, in.Date.String())
 	if err != nil {
 		return nil, err

@@ -56,7 +56,6 @@ func TestParser_Parse(t *testing.T) {
 	})
 
 	t.Run("caching", func(t *testing.T) {
-		// First call - loads from file
 		res1, err := p.Parse(2025, 1)
 		if err != nil {
 			t.Fatal(err)
@@ -73,7 +72,6 @@ func TestParser_Parse(t *testing.T) {
 			_ = os.Rename(tempPath, filePath)
 		}()
 
-		// Second call - should use cache
 		res2, err := p.Parse(2025, 1)
 		assert.NoError(t, err)
 		assert.Equal(t, res1, res2)
@@ -121,7 +119,6 @@ func TestParser_Parse(t *testing.T) {
 		wd, _ := os.Getwd()
 		testDir := filepath.Join(wd, "testdata")
 
-		// Create files for different years to test eviction
 		years := []int{2025, 2026, 2027}
 		for _, y := range years {
 			data, _ := os.ReadFile(filepath.Join(testDir, "workdays_2025.json"))
@@ -135,18 +132,15 @@ func TestParser_Parse(t *testing.T) {
 			}
 		}()
 
-		// Cap = 2
 		p := New(testDir, 2, logger)
 
-		// Load 2025 and 2026
 		_, _ = p.Parse(2025, 1)
 		_, _ = p.Parse(2026, 1)
 		assert.Equal(t, 2, p.cache.Len())
 
-		// Access 2025 again (move to front)
+		// Повторный доступ к 2025 двигает его в голову LRU — вытеснится 2026.
 		_, _ = p.Parse(2025, 1)
 
-		// Load 2027 (should evict 2026)
 		_, _ = p.Parse(2027, 1)
 		assert.Equal(t, 2, p.cache.Len())
 		assert.False(t, p.cache.Contains(2026))
@@ -185,7 +179,6 @@ func BenchmarkParser_Parse_CacheHit(b *testing.B) {
 	testDir := filepath.Join(wd, "testdata")
 	p := New(testDir, 10, logger)
 
-	// Pre-populate cache
 	_, _ = p.Parse(2025, 1)
 
 	b.ResetTimer()

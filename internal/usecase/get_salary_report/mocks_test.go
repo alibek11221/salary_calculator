@@ -7,7 +7,6 @@ package get_salary_report_test
 import (
 	context "context"
 	reflect "reflect"
-	time "time"
 
 	value_objects "salary_calculator/internal/dto/value_objects"
 	dbstore "salary_calculator/internal/generated/dbstore"
@@ -208,32 +207,17 @@ func (m *MockvacationPay) EXPECT() *MockvacationPayMockRecorder {
 	return m.recorder
 }
 
-// CalculatePayWith mocks base method.
-func (m *MockvacationPay) CalculatePayWith(data *vacation_pay.EarningsData, from, to time.Time) (*vacation_pay.Pay, error) {
+// NetPaymentsForMonth mocks base method.
+func (m *MockvacationPay) NetPaymentsForMonth(ctx context.Context, vacations []dbstore.Vacation, year, month int, ndfl float64, earnings *vacation_pay.EarningsData) ([]value_objects.ExtraPayment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CalculatePayWith", data, from, to)
-	ret0, _ := ret[0].(*vacation_pay.Pay)
+	ret := m.ctrl.Call(m, "NetPaymentsForMonth", ctx, vacations, year, month, ndfl, earnings)
+	ret0, _ := ret[0].([]value_objects.ExtraPayment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CalculatePayWith indicates an expected call of CalculatePayWith.
-func (mr *MockvacationPayMockRecorder) CalculatePayWith(data, from, to interface{}) *gomock.Call {
+// NetPaymentsForMonth indicates an expected call of NetPaymentsForMonth.
+func (mr *MockvacationPayMockRecorder) NetPaymentsForMonth(ctx, vacations, year, month, ndfl, earnings interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculatePayWith", reflect.TypeOf((*MockvacationPay)(nil).CalculatePayWith), data, from, to)
-}
-
-// LoadEarningsData mocks base method.
-func (m *MockvacationPay) LoadEarningsData(ctx context.Context) (*vacation_pay.EarningsData, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadEarningsData", ctx)
-	ret0, _ := ret[0].(*vacation_pay.EarningsData)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadEarningsData indicates an expected call of LoadEarningsData.
-func (mr *MockvacationPayMockRecorder) LoadEarningsData(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadEarningsData", reflect.TypeOf((*MockvacationPay)(nil).LoadEarningsData), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NetPaymentsForMonth", reflect.TypeOf((*MockvacationPay)(nil).NetPaymentsForMonth), ctx, vacations, year, month, ndfl, earnings)
 }
