@@ -1429,22 +1429,10 @@
                 }
             }
         },
-        "salary_calculator_internal_services_calculator.SalaryCalculationResult": {
+        "salary_calculator_internal_services_calculator.PayoutBreakdown": {
             "type": "object",
             "properties": {
                 "advance": {
-                    "type": "number"
-                },
-                "extra_payments": {
-                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto"
-                },
-                "grossAdvance": {
-                    "type": "number"
-                },
-                "grossSalary": {
-                    "type": "number"
-                },
-                "grossTotal": {
                     "type": "number"
                 },
                 "salary": {
@@ -1452,6 +1440,38 @@
                 },
                 "total": {
                     "type": "number"
+                }
+            }
+        },
+        "salary_calculator_internal_services_calculator.SalaryCalculationResult": {
+            "type": "object",
+            "properties": {
+                "brutto": {
+                    "description": "Brutto — оклад грязными, без доплат.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/salary_calculator_internal_services_calculator.PayoutBreakdown"
+                        }
+                    ]
+                },
+                "extra_payments": {
+                    "$ref": "#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto"
+                },
+                "in_hand": {
+                    "description": "InHand — фактические выплаты на руки: netto + доплаты своего типа,\nTotal дополнительно включает выплаты типа extra (премия, отпускные).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/salary_calculator_internal_services_calculator.PayoutBreakdown"
+                        }
+                    ]
+                },
+                "netto": {
+                    "description": "Netto — оклад за вычетом НДФЛ, без доплат.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/salary_calculator_internal_services_calculator.PayoutBreakdown"
+                        }
+                    ]
                 }
             }
         }

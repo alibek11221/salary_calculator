@@ -85,7 +85,7 @@ func TestUsecase_Do(t *testing.T) {
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(_ context.Context, _ value_objects.SalaryDate, sCtx value_objects.SalaryCalculationContext) (*calculator.SalaryCalculationResult, error) {
 				gotCtx = sCtx
-				return &calculator.SalaryCalculationResult{Total: 1}, nil
+				return &calculator.SalaryCalculationResult{InHand: calculator.PayoutBreakdown{Total: 1}}, nil
 			})
 
 		u := uc.New(f.r, f.parser, f.wdCalc, f.salCalc, f.vacPay)
@@ -129,7 +129,7 @@ func TestUsecase_Do(t *testing.T) {
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(_ context.Context, _ value_objects.SalaryDate, sCtx value_objects.SalaryCalculationContext) (*calculator.SalaryCalculationResult, error) {
 				gotCtx = sCtx
-				return &calculator.SalaryCalculationResult{Total: 1}, nil
+				return &calculator.SalaryCalculationResult{InHand: calculator.PayoutBreakdown{Total: 1}}, nil
 			})
 
 		u := uc.New(f.r, f.parser, f.wdCalc, f.salCalc, f.vacPay)
@@ -166,7 +166,7 @@ func TestUsecase_Do(t *testing.T) {
 			Return(nil, nil)
 
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(&calculator.SalaryCalculationResult{Total: 1}, nil)
+			Return(&calculator.SalaryCalculationResult{InHand: calculator.PayoutBreakdown{Total: 1}}, nil)
 
 		u := uc.New(f.r, f.parser, f.wdCalc, f.salCalc, f.vacPay)
 		_, err := u.Do(context.Background(), report_dto.In{Year: 2026, Month: 6, Earnings: earnings})
@@ -198,7 +198,7 @@ func TestUsecase_Do(t *testing.T) {
 		f.salCalc.EXPECT().CalculateSalary(gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(_ context.Context, _ value_objects.SalaryDate, sCtx value_objects.SalaryCalculationContext) (*calculator.SalaryCalculationResult, error) {
 				gotCtx = sCtx
-				return &calculator.SalaryCalculationResult{Total: 1}, nil
+				return &calculator.SalaryCalculationResult{InHand: calculator.PayoutBreakdown{Total: 1}}, nil
 			})
 
 		u := uc.New(f.r, f.parser, f.wdCalc, f.salCalc, f.vacPay)

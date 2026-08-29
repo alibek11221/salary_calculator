@@ -354,22 +354,33 @@ definitions:
       time.Time:
         type: string
     type: object
-  salary_calculator_internal_services_calculator.SalaryCalculationResult:
+  salary_calculator_internal_services_calculator.PayoutBreakdown:
     properties:
       advance:
-        type: number
-      extra_payments:
-        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto'
-      grossAdvance:
-        type: number
-      grossSalary:
-        type: number
-      grossTotal:
         type: number
       salary:
         type: number
       total:
         type: number
+    type: object
+  salary_calculator_internal_services_calculator.SalaryCalculationResult:
+    properties:
+      brutto:
+        allOf:
+        - $ref: '#/definitions/salary_calculator_internal_services_calculator.PayoutBreakdown'
+        description: Brutto — оклад грязными, без доплат.
+      extra_payments:
+        $ref: '#/definitions/salary_calculator_internal_dto_value_objects.ExtraPaymentsCollectionDto'
+      in_hand:
+        allOf:
+        - $ref: '#/definitions/salary_calculator_internal_services_calculator.PayoutBreakdown'
+        description: |-
+          InHand — фактические выплаты на руки: netto + доплаты своего типа,
+          Total дополнительно включает выплаты типа extra (премия, отпускные).
+      netto:
+        allOf:
+        - $ref: '#/definitions/salary_calculator_internal_services_calculator.PayoutBreakdown'
+        description: Netto — оклад за вычетом НДФЛ, без доплат.
     type: object
 host: localhost:8080
 info:

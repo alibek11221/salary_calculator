@@ -43,16 +43,13 @@ func TestService_CalculateSalary(t *testing.T) {
 				r.EXPECT().GetDutyByDate(gomock.Any(), "2025_01").Return(dbstore.Duty{}, sql.ErrNoRows)
 			},
 			check: func(t *testing.T, got *calculator.SalaryCalculationResult) {
-				assert.Equal(t, 100000.0, got.GrossAdvance)
-				assert.Equal(t, 100000.0, got.GrossSalary)
-				assert.Equal(t, 200000.0, got.GrossTotal)
-				assert.Equal(t, 87000.0, got.Advance)
-				// 87000 + еда 529×20 = 10580
-				assert.Equal(t, 97580.0, got.Salary)
-				assert.Equal(t, 184580.0, got.Total)
+				assert.Equal(t, calculator.PayoutBreakdown{Advance: 100000, Salary: 100000, Total: 200000}, got.Brutto)
+				assert.Equal(t, calculator.PayoutBreakdown{Advance: 87000, Salary: 87000, Total: 174000}, got.Netto)
+				// InHand.Salary: 87000 + еда 529×20 = 10580 gross → 9204.6 net (−13% НДФЛ)
+				assert.Equal(t, calculator.PayoutBreakdown{Advance: 87000, Salary: 96204.6, Total: 183204.6}, got.InHand)
 				assert.Len(t, got.ExtraPayments.Payments, 1)
 				assert.Equal(t, calculator.FoodPaymentName, got.ExtraPayments.Payments[0].Name)
-				assert.Equal(t, 10580.0, got.ExtraPayments.Total)
+				assert.Equal(t, 9204.6, got.ExtraPayments.Total)
 			},
 		},
 		{
@@ -64,12 +61,14 @@ func TestService_CalculateSalary(t *testing.T) {
 				r.EXPECT().GetDutyByDate(gomock.Any(), "2025_01").Return(dbstore.Duty{}, sql.ErrNoRows)
 			},
 			check: func(t *testing.T, got *calculator.SalaryCalculationResult) {
-				// Премия имеет тип extra: в аванс/зарплату не входит, только в списке доплат.
-				assert.Equal(t, 87000.0, got.Advance)
-				assert.Equal(t, 97580.0, got.Salary)
-				assert.Equal(t, 184580.0, got.Total)
+				// Премия имеет тип extra: в аванс/остаток не входит, только в InHand.Total.
+				assert.Equal(t, calculator.PayoutBreakdown{Advance: 87000, Salary: 87000, Total: 174000}, got.Netto)
+				assert.Equal(t, 87000.0, got.InHand.Advance)
+				assert.Equal(t, 96204.6, got.InHand.Salary)
+				assert.Equal(t, 196254.6, got.InHand.Total) // 87000 + 96204.6 + 13050
 				assert.Len(t, got.ExtraPayments.Payments, 2)
-				assert.Equal(t, 25580.0, got.ExtraPayments.Total) // 10580 еда + 15000 премия
+				// 9204.6 еда + 13050 премия (15000 − 13% НДФЛ)
+				assert.Equal(t, 22254.6, got.ExtraPayments.Total)
 			},
 		},
 		{
@@ -81,10 +80,12 @@ func TestService_CalculateSalary(t *testing.T) {
 				}, nil)
 			},
 			check: func(t *testing.T, got *calculator.SalaryCalculationResult) {
-				// 12ч×2 + 24ч×1 = 48ч; ставка 200000/31/24; выплата = ставка×48/5 (аванс).
-				expectedDuty := 200000.0 / 31.0 / 24.0 * 48.0 / 5.0
-				assert.InDelta(t, 87000.0+expectedDuty, got.Advance, 0.01)
-				assert.Equal(t, 97580.0, got.Salary)
+				// 12ч×2 + 24ч×1 = 48ч; ставка 200000/31/24; выплата = ставка×48/5 (аванс), минус 13% НДФЛ.
+				expectedDuty := 200000.0 / 31.0 / 24.0 * 48.0 / 5.0 * 0.87
+				assert.Equal(t, 87000.0, got.Netto.Advance)
+				assert.InDelta(t, 87000.0+expectedDuty, got.InHand.Advance, 0.01)
+				assert.Equal(t, 96204.6, got.InHand.Salary)
+				assert.InDelta(t, 87000.0+expectedDuty+96204.6, got.InHand.Total, 0.01)
 				assert.Len(t, got.ExtraPayments.Payments, 2)
 			},
 		},
@@ -109,15 +110,16 @@ func TestService_CalculateSalary(t *testing.T) {
 			},
 			check: func(t *testing.T, got *calculator.SalaryCalculationResult) {
 				// Аванс: 200000/20×7 = 70000 gross → 60900 net.
-				assert.Equal(t, 70000.0, got.GrossAdvance)
-				assert.Equal(t, 60900.0, got.Advance)
-				// Еда по отработанным дням: 529×(7+10)=8993. Зарплата: 87000+8993=95993.
-				assert.Equal(t, 95993.0, got.Salary)
-				// Строки доплат: еда + отпускные.
+				assert.Equal(t, 70000.0, got.Brutto.Advance)
+				assert.Equal(t, 60900.0, got.Netto.Advance)
+				// Еда по отработанным дням: 529×(7+10)=8993 gross → 7823.91 net. Остаток: 87000+7823.91.
+				assert.Equal(t, 94823.91, got.InHand.Salary)
+				// Строки доплат: еда + отпускные (отпускные уже net, повторно не облагаются).
 				assert.Len(t, got.ExtraPayments.Payments, 2)
 				names := []string{got.ExtraPayments.Payments[0].Name, got.ExtraPayments.Payments[1].Name}
 				assert.Contains(t, names, vacation_pay.PaymentName)
-				assert.Equal(t, 58993.0, got.ExtraPayments.Total) // 8993 + 50000
+				assert.Equal(t, 57823.91, got.ExtraPayments.Total) // 7823.91 + 50000
+				assert.Equal(t, 205723.91, got.InHand.Total)       // 60900 + 94823.91 + 50000
 			},
 		},
 		{

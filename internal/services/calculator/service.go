@@ -31,13 +31,21 @@ const (
 	BonusPaymentName = "Премия"
 )
 
+// PayoutBreakdown — разбивка сумм по выплатам: аванс, остаток и их сумма.
+type PayoutBreakdown struct {
+	Advance float64 `json:"advance"`
+	Salary  float64 `json:"salary"`
+	Total   float64 `json:"total"`
+}
+
 type SalaryCalculationResult struct {
-	Advance       float64                                  `json:"advance"`
-	Salary        float64                                  `json:"salary"`
-	Total         float64                                  `json:"total"`
-	GrossAdvance  float64                                  `json:"grossAdvance"`
-	GrossSalary   float64                                  `json:"grossSalary"`
-	GrossTotal    float64                                  `json:"grossTotal"`
+	// Brutto — оклад грязными, без доплат.
+	Brutto PayoutBreakdown `json:"brutto"`
+	// Netto — оклад за вычетом НДФЛ, без доплат.
+	Netto PayoutBreakdown `json:"netto"`
+	// InHand — фактические выплаты на руки: netto + доплаты своего типа,
+	// Total дополнительно включает выплаты типа extra (премия, отпускные).
+	InHand        PayoutBreakdown                          `json:"in_hand"`
 	ExtraPayments value_objects.ExtraPaymentsCollectionDto `json:"extra_payments"`
 }
 
@@ -88,7 +96,7 @@ func (s *Service) buildExtraPaymentsCollection(
 	extraCollection := value_objects.NewExtraPaymentsCollection(foodPayment)
 
 	if bonus.ID.Valid {
-		bonusPayment := s.calculateBonusPayment(bonus)
+		bonusPayment := s.calculateBonusPayment(bonus, sCtx)
 		extraCollection.Push(bonusPayment)
 	}
 
@@ -108,17 +116,20 @@ func (s *Service) calculateFoodPayment(sCtx value_objects.SalaryCalculationConte
 	// Еда платится за фактически отработанные дни: половинки месяца уже
 	// уменьшены на дни отпуска, в обычном месяце их сумма равна TotalWorkdays.
 	attendedDays := sCtx.Workdays().FirstHalfDays + sCtx.Workdays().SecondHalfDays
-	foodPay := FoodPaymentForDay * attendedDays
+	foodPay := float64(FoodPaymentForDay * attendedDays)
 	return value_objects.ExtraPayment{
-		Value: float64(foodPay),
+		Value: utils.ToTwoDecimals(utils.SubPercentage(foodPay, sCtx.CurrentNDFL())),
 		Name:  FoodPaymentName,
 		T:     value_objects.Salary,
 	}
 }
 
-func (s *Service) calculateBonusPayment(bonus dbstore.Bonuse) value_objects.ExtraPayment {
+func (s *Service) calculateBonusPayment(
+	bonus dbstore.Bonuse,
+	sCtx value_objects.SalaryCalculationContext,
+) value_objects.ExtraPayment {
 	return value_objects.ExtraPayment{
-		Value: bonus.Value,
+		Value: utils.ToTwoDecimals(utils.SubPercentage(bonus.Value, sCtx.CurrentNDFL())),
 		Name:  BonusPaymentName,
 		T:     value_objects.Extra,
 	}
@@ -136,7 +147,7 @@ func (s *Service) calculateDutyPayment(
 	advancePayment := totalDutyPay / 5
 
 	return value_objects.ExtraPayment{
-		Value: advancePayment,
+		Value: utils.ToTwoDecimals(utils.SubPercentage(advancePayment, sCtx.CurrentNDFL())),
 		Name:  DutyPaymentName,
 		T:     value_objects.Advance,
 	}
@@ -147,44 +158,41 @@ func (s *Service) CalculateSalary(
 	date value_objects.SalaryDate,
 	sCtx value_objects.SalaryCalculationContext,
 ) (*SalaryCalculationResult, error) {
-	res := &SalaryCalculationResult{}
-	res.GrossAdvance = utils.ToTwoDecimals(
-		s.calculateGrossAmount(
-			sCtx.CurrentBase(),
-			sCtx.Workdays().TotalWorkdays,
-			sCtx.Workdays().FirstHalfDays),
-	)
-	res.GrossSalary = utils.ToTwoDecimals(
-		s.calculateGrossAmount(
-			sCtx.CurrentBase(),
-			sCtx.Workdays().TotalWorkdays,
-			sCtx.Workdays().SecondHalfDays),
-	)
-	res.Advance = utils.ToTwoDecimals(
-		utils.SubPercentage(res.GrossAdvance, sCtx.CurrentNDFL()),
-	)
-	res.Salary = utils.ToTwoDecimals(
-		utils.SubPercentage(res.GrossSalary, sCtx.CurrentNDFL()),
-	)
+	grossAdvance := utils.ToTwoDecimals(s.calculateGrossAmount(
+		sCtx.CurrentBase(), sCtx.Workdays().TotalWorkdays, sCtx.Workdays().FirstHalfDays))
+	grossSalary := utils.ToTwoDecimals(s.calculateGrossAmount(
+		sCtx.CurrentBase(), sCtx.Workdays().TotalWorkdays, sCtx.Workdays().SecondHalfDays))
+
+	netAdvance := utils.ToTwoDecimals(utils.SubPercentage(grossAdvance, sCtx.CurrentNDFL()))
+	netSalary := utils.ToTwoDecimals(utils.SubPercentage(grossSalary, sCtx.CurrentNDFL()))
 
 	extraPayments, err := s.calculateExtraPayments(ctx, date, sCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	if extraPayments == nil {
-		return res, nil
-	}
+	totals := extraPayments.Total()
+	inHandAdvance := utils.ToTwoDecimals(netAdvance + totals[value_objects.Advance])
+	inHandSalary := utils.ToTwoDecimals(netSalary + totals[value_objects.Salary])
 
-	res.Advance += extraPayments.Total()[value_objects.Advance]
-	res.Salary += extraPayments.Total()[value_objects.Salary]
-
-	res.ExtraPayments = extraPayments.ToDto()
-
-	res.GrossTotal = res.GrossSalary + res.GrossAdvance
-	res.Total = res.Salary + res.Advance
-
-	return res, nil
+	return &SalaryCalculationResult{
+		Brutto: PayoutBreakdown{
+			Advance: grossAdvance,
+			Salary:  grossSalary,
+			Total:   utils.ToTwoDecimals(grossAdvance + grossSalary),
+		},
+		Netto: PayoutBreakdown{
+			Advance: netAdvance,
+			Salary:  netSalary,
+			Total:   utils.ToTwoDecimals(netAdvance + netSalary),
+		},
+		InHand: PayoutBreakdown{
+			Advance: inHandAdvance,
+			Salary:  inHandSalary,
+			Total:   utils.ToTwoDecimals(inHandAdvance + inHandSalary + totals[value_objects.Extra]),
+		},
+		ExtraPayments: extraPayments.ToDto(),
+	}, nil
 }
 
 func (s *Service) calculateGrossAmount(base float64, totalDays, workedDays int) float64 {

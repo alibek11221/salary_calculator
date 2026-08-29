@@ -75,9 +75,9 @@ func (u *usecase) Do(ctx context.Context, in estimate_dto.In) (*estimate_dto.Out
 
 		months = append(months, estimate_dto.MonthSummary{
 			Month:   value_objects.From(cur.Year(), int(cur.Month())).String(),
-			Advance: rep.Result.Advance,
-			Salary:  rep.Result.Salary,
-			Total:   rep.Result.Total,
+			Advance: rep.Result.InHand.Advance,
+			Salary:  rep.Result.InHand.Salary,
+			Total:   rep.Result.InHand.Total,
 		})
 	}
 

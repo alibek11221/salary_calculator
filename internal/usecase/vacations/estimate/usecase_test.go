@@ -52,13 +52,13 @@ func TestUsecase_Do(t *testing.T) {
 				require.Len(t, rin.ExtraVacations, 1)
 				assert.Equal(t, in.From.Time, rin.ExtraVacations[0].DateFrom.Time)
 				assert.Same(t, earnings, rin.Earnings)
-				return &report_dto.Out{Result: &calculator.SalaryCalculationResult{Advance: 1, Salary: 2, Total: 100}}, nil
+				return &report_dto.Out{Result: &calculator.SalaryCalculationResult{InHand: calculator.PayoutBreakdown{Advance: 1, Salary: 2, Total: 100}}}, nil
 			}),
 			rep.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, rin report_dto.In) (*report_dto.Out, error) {
 				assert.Equal(t, 2026, rin.Year)
 				assert.Equal(t, 9, rin.Month)
 				assert.Same(t, earnings, rin.Earnings)
-				return &report_dto.Out{Result: &calculator.SalaryCalculationResult{Advance: 3, Salary: 4, Total: 200}}, nil
+				return &report_dto.Out{Result: &calculator.SalaryCalculationResult{InHand: calculator.PayoutBreakdown{Advance: 3, Salary: 4, Total: 200}}}, nil
 			}),
 		)
 
